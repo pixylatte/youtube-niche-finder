@@ -5,8 +5,9 @@ import { isAdmin } from '../plan-state.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/niche.js';
 import en from '../i18n/en/niche.js';
+import tr from '../i18n/tr/niche.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* Доля хитов по тегам одной группы -- barList из tag_stats. Группа вводится
    свободным текстом (теги произвольные: theme/trigger/format/...), поэтому
