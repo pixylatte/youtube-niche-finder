@@ -4,8 +4,9 @@ import { view } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/enter.js';
 import en from '../i18n/en/enter.js';
+import tr from '../i18n/tr/enter.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ----------------------------------------------- Где заходить (план 27) */
 
