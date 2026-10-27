@@ -4,8 +4,9 @@ import { view } from '../shared.js';
 import { dict, fmtDate, fmtTime, fmtUtcSlot } from '../i18n.js';
 import ru from '../i18n/ru/calendar.js';
 import en from '../i18n/en/calendar.js';
+import tr from '../i18n/tr/calendar.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* --------------------------------------------- Контент-календарь (план 33) */
 
