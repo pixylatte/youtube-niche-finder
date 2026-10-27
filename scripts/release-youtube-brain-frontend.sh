@@ -28,8 +28,7 @@ rollback() {
     tar -xzf "$backup" -C "$APP/frontend" || true
   fi
 }
-trap 'rollback' ERR
-trap 'rm -rf -- "$tmp"' EXIT
+trap 'rollback; rm -rf -- "$tmp"' EXIT
 
 git -C "$APP" archive --format=tar "$EXPECTED_COMMIT" frontend | tar -xf - -C "$tmp"
 [[ -f "$tmp/frontend/index.html" && -f "$tmp/frontend/i18n/tr/app.js" ]] || fail "Missing YouTube Brain frontend"
