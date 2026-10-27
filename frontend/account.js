@@ -8,8 +8,9 @@ import { $, api, esc, notice } from './ui.js';
 import { dict } from './i18n.js';
 import ru from './i18n/ru/account.js';
 import en from './i18n/en/account.js';
+import tr from './i18n/tr/account.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 // что предлагает сервер: регистрация и сброс пароля есть только с почтой (SMTP)
 let offers = { signup: false, passwordReset: false };
