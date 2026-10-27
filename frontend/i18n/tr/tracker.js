@@ -1,0 +1,18 @@
+export default {
+  title: 'Kanal Takibi',
+  sub: 'Arka plan toplayıcısı bu kanalların istatistiklerini düzenli olarak kaydeder ve geçmişini oluşturur',
+  facelessAny: 'Yüz göstermeyen: tümü',
+  facelessYes: 'Yüz göstermeyen: evet',
+  facelessNo: 'Yüz göstermeyen: hayır',
+  formatPlaceholder: 'format',
+  topicPlaceholder: 'konu',
+  colChannel: 'Kanal',
+  colSubs: 'Aboneler',
+  colVideos: 'Videolar',
+  colViews: 'İzlenmeler',
+  colSnapshots: 'Veri kayıtları',
+  colRefreshed: 'Güncellendi',
+  remove: 'Takipten çıkar',
+  empty: 'Henüz takip edilen kanal yok veya yapay zekâ etiket filtresine eşleşen kanal bulunamadı',
+  removed: 'Kanal takip listesinden çıkarıldı',
+};
