@@ -230,7 +230,7 @@ def test_brain_next_daily_video_decision_ranks_only_evidence(browser, base_url):
         page.wait_for_selector("#bnCheck")
         assert page.locator("#bnChannel option").count() == 2
         assert "henüz bağlanmış sayılmaz" in page.inner_text("#view")
-        page.fill("#bnIdeas", "Başlık A\\nBaşlık B")
+        page.fill("#bnIdeas", "Başlık A\nBaşlık B")
         page.click("#bnCheck")
         page.wait_for_selector("text=1 kanıtlı araştırma adayı")
         text = page.inner_text("#view")
