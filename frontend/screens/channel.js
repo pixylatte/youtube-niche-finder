@@ -4,8 +4,9 @@ import { view, nicheOverviewBlock } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
 import ru from '../i18n/ru/channel.js';
 import en from '../i18n/en/channel.js';
+import tr from '../i18n/tr/channel.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ----------------------------------------------------------------- Канал */
 
