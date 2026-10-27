@@ -33,7 +33,7 @@ SHOTS = Path(__file__).resolve().parent / "screenshots"
 # на объекты из seed_demo.py.
 ROUTES = [
     "overview", "find", "viral", "channels", "categories", "keywords", "tags",
-    "tracker", "alerts", "ideas", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
+    "tracker", "alerts", "ideas", "brainNext", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
     "niches", "enter", "own", "data", "help", "mcp", "plan", "admin", "profile",
     "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f", "brief/avid000",
     "brief/avid000?gap=how%20to%20start%20a%20tiny%20AI%20lab%3F",
@@ -200,6 +200,70 @@ def test_screen_renders_without_errors(browser, base_url, route, locale):
         left = _ui_cyrillic(text + "\n" + chrome.replace("Русский", ""))
         assert not left, f"#/{route} (en): русский текст в интерфейсе: {left}"
 
+
+
+
+def test_brain_next_daily_video_decision_ranks_only_evidence(browser, base_url):
+    """No YouTube request: POST is intercepted; candidate evidence must be real data."""
+    page = _new_page(browser, "en")
+    seen = []
+    fixture = {
+        "ideas": [
+            {"idea": "Başlık A", "verdict": "free", "matchCount": 0,
+             "bestOutlierScore": None, "matches": []},
+            {"idea": "Başlık B", "verdict": "proven", "matchCount": 2,
+             "bestOutlierScore": 3.8, "matches": [{
+                 "videoId": "AbCd1234567", "title": "Kaynak video",
+                 "channelTitle": "Rakip kanal"
+             }]},
+        ]
+    }
+
+    def fake_idea_check(route):
+        seen.append(route.request.post_data_json)
+        route.fulfill(status=200, content_type="application/json",
+                      body=__import__("json").dumps(fixture, ensure_ascii=False))
+
+    page.route("**/api/ideas/check", fake_idea_check)
+    try:
+        page.goto(f"{base_url}/#/brainNext")
+        page.wait_for_selector("#bnCheck")
+        assert page.locator("#bnChannel option").count() == 2
+        assert "henüz bağlanmış sayılmaz" in page.inner_text("#view")
+        page.fill("#bnIdeas", "Başlık A\\nBaşlık B")
+        page.click("#bnCheck")
+        page.wait_for_selector("text=1 kanıtlı araştırma adayı")
+        text = page.inner_text("#view")
+        assert "Başlık B" in text and "Kaynak video" in text
+        assert "Başlık A" in text and "kesin öneri değil" in text
+        assert page.locator('a[href="https://www.youtube.com/watch?v=AbCd1234567"]').count() == 1
+        assert len(seen) == 1
+        assert seen[0]["ideas"] == ["Başlık A", "Başlık B"]
+        assert seen[0]["recentDays"] == 90
+        page.select_option("#bnChannel", "islam")
+        assert "1 Dakika İslam" in page.inner_text("#view")
+        assert "henüz bağlanmış sayılmaz" in page.inner_text("#view")
+    finally:
+        page.context.close()
+
+
+def test_brain_next_empty_local_evidence_never_promises_success(browser, base_url):
+    page = _new_page(browser, "en")
+    page.route("**/api/ideas/check", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body='{"ideas":[{"idea":"unknown topic","verdict":"free","matchCount":0,"matches":[]}]}'
+    ))
+    try:
+        page.goto(f"{base_url}/#/brainNext")
+        page.wait_for_selector("#bnCheck")
+        page.fill("#bnIdeas", "unknown topic")
+        page.click("#bnCheck")
+        page.wait_for_selector("text=Henüz doğrulanmış talep sinyali yok")
+        text = page.inner_text("#view")
+        assert "Yeterli kanıt bulunamadı" in text
+        assert "başarı garantisi" in text
+    finally:
+        page.context.close()
 
 def test_dictionaries_match_and_every_key_used_exists(browser, base_url):
     """У каждого неймспейса одинаковые ключи и {плейсхолдеры} в ru и en, и каждый
