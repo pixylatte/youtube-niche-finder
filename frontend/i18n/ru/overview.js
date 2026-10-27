@@ -1,4 +1,7 @@
 export default {
+  heroTitle: 'Исследование YouTube в одной панели',
+  heroSub: 'Ниши, вирусные видео и рост каналов на основе собранных данных.',
+  heroFind: 'Найти нишу', heroViral: 'Вирусные видео',
   digestOutliers: 'Новые outlier-видео',
   digestAcceleration: 'Ускоряются',
   digestRising: 'Растущие каналы',
