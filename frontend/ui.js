@@ -4,8 +4,9 @@
 import { getLocale, intlLocale, dict, fmtNum, fmtDate, fmtDateTime, onLocaleChange } from './i18n.js';
 import ru from './i18n/ru/ui.js';
 import en from './i18n/en/ui.js';
+import tr from './i18n/tr/ui.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 const $ =(sel, root = document) => root.querySelector(sel);
 
