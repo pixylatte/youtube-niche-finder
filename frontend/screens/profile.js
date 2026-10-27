@@ -10,8 +10,9 @@ import { getMe } from '../plan-state.js';
 import { dict, fmtDate, browserTimeZone } from '../i18n.js';
 import ru from '../i18n/ru/profile.js';
 import en from '../i18n/en/profile.js';
+import tr from '../i18n/tr/profile.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 async function viewProfile() {
   const me = getMe();
