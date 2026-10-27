@@ -4,8 +4,9 @@ import { view } from '../shared.js';
 import { dict, fmtUtcSlot } from '../i18n.js';
 import ru from '../i18n/ru/brief.js';
 import en from '../i18n/en/brief.js';
+import tr from '../i18n/tr/brief.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------- Бриф из outlier */
 
