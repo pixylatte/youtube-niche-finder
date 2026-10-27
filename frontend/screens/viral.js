@@ -4,8 +4,9 @@ import { view, plabel, base, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/viral.js';
 import en from '../i18n/en/viral.js';
+import tr from '../i18n/tr/viral.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* -------------------------------------------------------- Вирусные видео */
 
