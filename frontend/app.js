@@ -108,7 +108,7 @@ async function start() {
   try { me = await api('/api/auth/me'); } catch { /* старый сервер без входа */ }
   // язык, выбранный на другом устройстве, -- если в этом браузере ещё не выбирали;
   // слушатель смены ещё не подписан, поэтому каркас переводим сами
-  if (!hasStoredLocale() && me.locale && setLocale(me.locale, { persist: false })) translateChrome();
+  if (!hasStoredLocale() && getLocale() !== 'tr' && me.locale && setLocale(me.locale, { persist: false })) translateChrome();
   listenLocale();
   setOffers(me.signup);
   if (me.multiUser && !me.user) { if (!openAccountLink(false)) showSignIn(); return; }
