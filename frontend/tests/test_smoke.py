@@ -40,7 +40,7 @@ ROUTES = [
     "compare/avid000,avid001",
 ]
 
-LOCALES = ["ru", "en"]
+LOCALES = ["ru", "en", "tr"]
 
 # Кириллица, допустимая в английском интерфейсе: данные из seed_demo.py
 # (название канала), а не текст интерфейса.
@@ -250,6 +250,50 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
         assert page.inner_text(".brand-name") == "YouTube Brain"
     finally:
         page.context.close()
+
+
+
+def test_completed_turkish_dictionary_keys_and_placeholders(browser, base_url):
+    """Core namespace translations are complete and use the same interpolation fields."""
+    namespaces = (
+        "app", "router", "overview", "find", "viral", "ideas", "categories",
+        "keywords", "shared", "channels", "tracker", "saved", "calendar", "alerts",
+        "data", "tags", "language", "clusters", "titles", "packaging", "niches",
+        "metadata", "transcripts", "enter", "compare", "manualRuns",
+        "planState", "impersonation", "plan", "hookView",
+    )
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        dictionaries = page.evaluate("""async names => {
+            return await Promise.all(names.map(async name => {
+                const en = (await import('/i18n/en/' + name + '.js')).default;
+                const tr = (await import('/i18n/tr/' + name + '.js')).default;
+                return { name, en, tr };
+            }));
+        }""", list(namespaces))
+    finally:
+        page.context.close()
+
+    fields = lambda value: sorted(set(re.findall(r"\{(\w+)\}", str(value))))
+    errors = []
+    for entry in dictionaries:
+        namespace, en, tr = entry["name"], entry["en"], entry["tr"]
+        for key in set(en) ^ set(tr):
+            errors.append(f"{namespace}.{key}: missing Turkish/English key")
+        for key in set(en) & set(tr):
+            # Dict-valued plural strings have exactly matching plural variants.
+            if isinstance(en[key], dict) != isinstance(tr[key], dict):
+                errors.append(f"{namespace}.{key}: different plural shape")
+                continue
+            if isinstance(en[key], dict) and set(en[key]) != set(tr[key]):
+                errors.append(f"{namespace}.{key}: different plural keys")
+            def flatten(v):
+                return " ".join(str(x) for x in v.values()) if isinstance(v, dict) else str(v)
+            if fields(flatten(en[key])) != fields(flatten(tr[key])):
+                errors.append(f"{namespace}.{key}: mismatched template placeholders")
+    assert not errors, "\n".join(sorted(errors))
 
 
 def test_dictionaries_match_and_every_key_used_exists(browser, base_url):
