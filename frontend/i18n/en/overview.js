@@ -1,4 +1,7 @@
 export default {
+  heroTitle: 'Your YouTube research, in one workspace',
+  heroSub: 'Discover niches, viral videos and growth signals using the data you have collected.',
+  heroFind: 'Explore niches', heroViral: 'Explore viral videos',
   digestOutliers: 'New outlier videos',
   digestAcceleration: 'Accelerating',
   digestRising: 'Rising channels',
