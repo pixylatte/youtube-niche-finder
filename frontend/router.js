@@ -13,6 +13,7 @@ import { viewTracker } from './screens/tracker.js';
 import { viewAlerts } from './screens/alerts.js';
 import { viewEnter } from './screens/enter.js';
 import { viewIdeas } from './screens/ideas.js';
+import { viewBrainNext } from './screens/brain-next.js';
 import { viewLanguage } from './screens/language.js';
 import { viewTranscripts } from './screens/transcripts.js';
 import { viewNicheClusters } from './screens/clusters.js';
@@ -65,6 +66,7 @@ const ROUTES = {
   tracker: { run: viewTracker },
   alerts: { run: viewAlerts },
   ideas: { run: viewIdeas },
+  'brain-next': { run: viewBrainNext },
   language: { run: viewLanguage },
   transcripts: { run: viewTranscripts },
   clusters: { run: viewNicheClusters },
