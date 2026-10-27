@@ -34,40 +34,65 @@
       <span class="brand-tag" id="brandTag">STUDIO</span>
     </div>
 
-    <nav class="nav" id="nav">
-      <!-- подписи пунктов (span.nav-label) переводит app.js по словарю router -->
-      <a class="nav-item" href="#/overview"><svg class="ico"><use href="#i-home"/></svg><span class="nav-label">Overview</span></a>
-      <a class="nav-item" href="#/find"><svg class="ico"><use href="#i-search"/></svg><span class="nav-label">Find a niche</span></a>
-      <a class="nav-item" href="#/viral"><svg class="ico"><use href="#i-fire"/></svg><span class="nav-label">Viral videos</span></a>
-      <a class="nav-item" href="#/channels"><svg class="ico"><use href="#i-eye"/></svg><span class="nav-label">Outlier channels</span></a>
-      <a class="nav-item" href="#/categories"><svg class="ico"><use href="#i-grid"/></svg><span class="nav-label">Categories</span></a>
-      <a class="nav-item" href="#/keywords"><svg class="ico"><use href="#i-tag"/></svg><span class="nav-label">Keywords</span></a>
-      <a class="nav-item" href="#/tags"><svg class="ico"><use href="#i-tag"/></svg><span class="nav-label">Top tags by category</span></a>
-      <a class="nav-item" href="#/tracker"><svg class="ico"><use href="#i-users"/></svg><span class="nav-label">Channel tracker</span></a>
-      <a class="nav-item" href="#/alerts"><svg class="ico"><use href="#i-fire"/></svg><span class="nav-label">Alerts</span></a>
-      <a class="nav-item" href="#/ideas"><svg class="ico"><use href="#i-search"/></svg><span class="nav-label">Idea check</span></a>
-      <a class="nav-item" href="#/language"><svg class="ico"><use href="#i-layers"/></svg><span class="nav-label">Language gaps</span></a>
-      <a class="nav-item" href="#/transcripts"><svg class="ico"><use href="#i-edit"/></svg><span class="nav-label">Transcripts</span></a>
-      <a class="nav-item" href="#/clusters"><svg class="ico"><use href="#i-layers"/></svg><span class="nav-label">Niche map</span></a>
-      <a class="nav-item" href="#/titles"><svg class="ico"><use href="#i-edit"/></svg><span class="nav-label">Title check</span></a>
-      <a class="nav-item" href="#/saved"><svg class="ico"><use href="#i-bookmark"/></svg><span class="nav-label">Saved</span></a>
-      <a class="nav-item" href="#/packaging"><svg class="ico"><use href="#i-eye"/></svg><span class="nav-label">Repackaging</span></a>
-      <a class="nav-item" href="#/metadata"><svg class="ico"><use href="#i-edit"/></svg><span class="nav-label">Metadata review</span></a>
-      <a class="nav-item" href="#/calendar"><svg class="ico"><use href="#i-bookmark"/></svg><span class="nav-label">Calendar</span></a>
-      <a class="nav-item" href="#/niches"><svg class="ico"><use href="#i-layers"/></svg><span class="nav-label">Niches</span></a>
-      <a class="nav-item" href="#/enter"><svg class="ico"><use href="#i-fire"/></svg><span class="nav-label">Where to enter</span></a>
-      <a class="nav-item" href="#/own"><svg class="ico"><use href="#i-users"/></svg><span class="nav-label">My channels</span></a>
-      <a class="nav-item" href="#/data"><svg class="ico"><use href="#i-db"/></svg><span class="nav-label">Data</span></a>
-      <a class="nav-item" href="#/help"><svg class="ico"><use href="#i-help"/></svg><span class="nav-label">Help &amp; FAQ</span></a>
-      <a class="nav-item" href="#/mcp"><svg class="ico"><use href="#i-plug"/></svg><span class="nav-label">MCP connection</span></a>
-      <a class="nav-item" href="#/plan" hidden><svg class="ico"><use href="#i-bookmark"/></svg><span class="nav-label">Plan</span></a>
-      <a class="nav-item" href="#/profile" hidden><svg class="ico"><use href="#i-users"/></svg><span class="nav-label">Profile</span></a>
-      <a class="nav-item" href="#/admin" hidden><svg class="ico"><use href="#i-db"/></svg><span class="nav-label">Admin</span></a>
+    <nav class="nav" id="nav" aria-label="YouTube Brain">
+      <a class="nav-item nav-overview" href="#/overview"><svg class="ico"><use href="#i-home"/></svg><span class="nav-label">Overview</span></a>
+      <details class="nav-group" data-group="research" open>
+        <summary class="nav-group-title" data-i18n="navResearch">navResearch</summary>
+        <div class="nav-group-items">
+          <a class="nav-item" href="#/find"><svg class="ico"><use href="#i-search"/></svg><span class="nav-label">Find a niche</span></a>
+          <a class="nav-item" href="#/viral"><svg class="ico"><use href="#i-fire"/></svg><span class="nav-label">Viral videos</span></a>
+          <a class="nav-item" href="#/niches"><svg class="ico"><use href="#i-layers"/></svg><span class="nav-label">Niches</span></a>
+          <a class="nav-item" href="#/enter"><svg class="ico"><use href="#i-fire"/></svg><span class="nav-label">Where to enter</span></a>
+          <a class="nav-item" href="#/categories"><svg class="ico"><use href="#i-grid"/></svg><span class="nav-label">Categories</span></a>
+          <a class="nav-item" href="#/keywords"><svg class="ico"><use href="#i-tag"/></svg><span class="nav-label">Keywords</span></a>
+          <a class="nav-item" href="#/tags"><svg class="ico"><use href="#i-tag"/></svg><span class="nav-label">Top tags by category</span></a>
+          <a class="nav-item" href="#/clusters"><svg class="ico"><use href="#i-layers"/></svg><span class="nav-label">Niche map</span></a>
+          <a class="nav-item" href="#/language"><svg class="ico"><use href="#i-layers"/></svg><span class="nav-label">Language gaps</span></a>
+        </div>
+      </details>
+      <details class="nav-group" data-group="competitors">
+        <summary class="nav-group-title" data-i18n="navCompetitors">navCompetitors</summary>
+        <div class="nav-group-items">
+          <a class="nav-item" href="#/channels"><svg class="ico"><use href="#i-eye"/></svg><span class="nav-label">Outlier channels</span></a>
+          <a class="nav-item" href="#/tracker"><svg class="ico"><use href="#i-users"/></svg><span class="nav-label">Channel tracker</span></a>
+          <a class="nav-item" href="#/alerts"><svg class="ico"><use href="#i-fire"/></svg><span class="nav-label">Alerts</span></a>
+          <a class="nav-item" href="#/own"><svg class="ico"><use href="#i-users"/></svg><span class="nav-label">My channels</span></a>
+        </div>
+      </details>
+      <details class="nav-group" data-group="content">
+        <summary class="nav-group-title" data-i18n="navContent">navContent</summary>
+        <div class="nav-group-items">
+          <a class="nav-item" href="#/ideas"><svg class="ico"><use href="#i-search"/></svg><span class="nav-label">Idea check</span></a>
+          <a class="nav-item" href="#/titles"><svg class="ico"><use href="#i-edit"/></svg><span class="nav-label">Title check</span></a>
+          <a class="nav-item" href="#/metadata"><svg class="ico"><use href="#i-edit"/></svg><span class="nav-label">Metadata review</span></a>
+          <a class="nav-item" href="#/transcripts"><svg class="ico"><use href="#i-edit"/></svg><span class="nav-label">Transcripts</span></a>
+          <a class="nav-item" href="#/packaging"><svg class="ico"><use href="#i-eye"/></svg><span class="nav-label">Repackaging</span></a>
+          <a class="nav-item" href="#/saved"><svg class="ico"><use href="#i-bookmark"/></svg><span class="nav-label">Saved</span></a>
+          <a class="nav-item" href="#/calendar"><svg class="ico"><use href="#i-bookmark"/></svg><span class="nav-label">Calendar</span></a>
+        </div>
+      </details>
+      <details class="nav-group" data-group="system">
+        <summary class="nav-group-title" data-i18n="navSystem">navSystem</summary>
+        <div class="nav-group-items">
+          <a class="nav-item" href="#/data"><svg class="ico"><use href="#i-db"/></svg><span class="nav-label">Data</span></a>
+          <a class="nav-item" href="#/mcp"><svg class="ico"><use href="#i-plug"/></svg><span class="nav-label">MCP connection</span></a>
+          <a class="nav-item" href="#/help"><svg class="ico"><use href="#i-help"/></svg><span class="nav-label">Help &amp; FAQ</span></a>
+          <a class="nav-item" href="#/plan" hidden><svg class="ico"><use href="#i-bookmark"/></svg><span class="nav-label">Plan</span></a>
+          <a class="nav-item" href="#/profile" hidden><svg class="ico"><use href="#i-users"/></svg><span class="nav-label">Profile</span></a>
+          <a class="nav-item" href="#/admin" hidden><svg class="ico"><use href="#i-db"/></svg><span class="nav-label">Admin</span></a>
+        </div>
+      </details>
     </nav>
 
     <div class="sidebar-foot">
       <button class="btn btn-ghost" id="themeToggle" type="button">Light theme</button>
-      <button class="btn btn-ghost" id="langToggle" type="button" data-i18n-title="langTitle">Русский</button>
+      <label class="sidebar-lang" for="langSelect"><span data-i18n="langTitle">Interface language</span>
+        <select id="langSelect" aria-label="Interface language">
+          <option value="tr">Türkçe</option>
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+        </select>
+      </label>
       <button class="btn btn-ghost" id="signOut" type="button" hidden>Sign out</button>
       <div class="foot-stat" id="footStat"></div>
       <a class="foot-stat" id="myQuota" href="#/plan" hidden></a>
