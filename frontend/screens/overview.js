@@ -4,8 +4,9 @@ import { view, plabel, base } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
 import ru from '../i18n/ru/overview.js';
 import en from '../i18n/en/overview.js';
+import tr from '../i18n/tr/overview.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* --------------------------------------------------------------- Обзор */
 
@@ -43,6 +44,11 @@ async function viewOverview() {
   const thin = cov.videosPublishedInPeriod < 5;
 
   view.innerHTML = `
+    <div class="brain-hero">
+      <div><div class="brain-hero-eyebrow">YOUTUBE BRAIN · RESEARCH STUDIO</div>
+        <h1>${esc(t('heroTitle'))}</h1><p>${esc(t('heroSub'))}</p></div>
+      <div class="brain-hero-links"><a href="#/find">${esc(t('heroFind'))}</a><a href="#/viral">${esc(t('heroViral'))}</a></div>
+    </div>
     ${thin ? notice(t('thinWindow', {
       period: plabel(state.period), inWindow: cov.videosPublishedInPeriod, total: num(cov.videosTotal),
     })) : ''}
