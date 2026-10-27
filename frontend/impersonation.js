@@ -7,8 +7,9 @@ import { $, api, esc, toast } from './ui.js';
 import { dict, fmtTime } from './i18n.js';
 import ru from './i18n/ru/impersonation.js';
 import en from './i18n/en/impersonation.js';
+import tr from './i18n/tr/impersonation.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 let view = null;
 let timer = null;
