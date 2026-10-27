@@ -1,6 +1,6 @@
 export default {
   crumb: 'Sign in',
-  signInTitle: 'Sign in to niche-finder',
+  signInTitle: 'Sign in to YouTube Brain',
   signInSub: 'accounts are issued by the administrator of this server',
   signInSubOpen: 'sign in or create an account',
   passwordPlaceholder: 'password',
