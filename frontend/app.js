@@ -10,11 +10,13 @@ import { viewTwoFactorSetup, adoptBrowserTimezone } from './screens/profile.js';
 import { dict, getLocale, hasStoredLocale, setLocale, onLocaleChange, translateStatic } from './i18n.js';
 import ru from './i18n/ru/app.js';
 import en from './i18n/en/app.js';
+import tr from './i18n/tr/app.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 // названия языков на самих этих языках -- кнопка показывает, на какой переключит
-const LANG_NAMES = { ru: 'Русский', en: 'English' };
+const LANG_NAMES = { ru: 'Русский', en: 'English', tr: 'Türkçe' };
+const LANG_ORDER = ['en', 'ru', 'tr'];
 
 let me = { multiUser: false, user: null };
 
@@ -45,7 +47,7 @@ function translateChrome() {
     if (label) label.textContent = routeTitle(a.getAttribute('href').slice(2));
   });
   applyTheme(document.documentElement.dataset.theme || 'dark');
-  $('#langToggle').textContent = LANG_NAMES[getLocale() === 'ru' ? 'en' : 'ru'];
+  $('#langToggle').textContent = LANG_NAMES[LANG_ORDER[(LANG_ORDER.indexOf(getLocale()) + 1) % LANG_ORDER.length]];
   if (me.multiUser && me.user) $('#signOut').textContent = t('signOutAs', { email: me.user.email });
   renderBanner();
 }
@@ -65,7 +67,7 @@ function initChrome() {
   $('#themeToggle').addEventListener('click', () =>
     applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
-  $('#langToggle').addEventListener('click', () => setLocale(getLocale() === 'ru' ? 'en' : 'ru'));
+  $('#langToggle').addEventListener('click', () => setLocale(LANG_ORDER[(LANG_ORDER.indexOf(getLocale()) + 1) % LANG_ORDER.length]));
 
   translateChrome();
   addEventListener('hashchange', onHash);
@@ -90,7 +92,9 @@ function listenLocale() {
     if (me.multiUser && me.user) renderPlanLine();
     // язык уведомлений и дайджеста хранится на сервере; без сервера -- не беда.
     // P2-05: в просмотре под пользователем его настройки не трогаем (сервер и так даст 403)
-    if (!inView()) api('/api/me/locale', { method: 'PUT', body: { locale: loc } }).catch(() => {});
+    // The backend currently stores only ru/en locales. Keep tr as a browser-only
+    // preference until server-side validation and translated error messages exist.
+    if (!inView() && loc !== 'tr') api('/api/me/locale', { method: 'PUT', body: { locale: loc } }).catch(() => {});
     if (me.multiUser && !me.user) { showSignIn(); return; }
     await loadScores();
     render();
