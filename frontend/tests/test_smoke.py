@@ -254,13 +254,14 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
 
 
 def test_completed_turkish_dictionary_keys_and_placeholders(browser, base_url):
-    """Core namespace translations are complete and use the same interpolation fields."""
+    """Fully translated namespaces keep matching keys, plurals and template fields."""
     namespaces = (
         "app", "router", "overview", "find", "viral", "ideas", "categories",
         "keywords", "shared", "channels", "tracker", "saved", "calendar", "alerts",
         "data", "tags", "language", "clusters", "titles", "packaging", "niches",
         "metadata", "transcripts", "enter", "compare", "manualRuns",
         "planState", "impersonation", "plan", "hookView",
+        "ui", "account", "profile", "own", "brief", "channel", "niche",
     )
     page = _new_page(browser, "tr")
     try:
