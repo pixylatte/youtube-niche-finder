@@ -4,8 +4,9 @@ import { view } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
 import ru from '../i18n/ru/own.js';
 import en from '../i18n/en/own.js';
+import tr from '../i18n/tr/own.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------ Мои каналы (план 14)
    Реальные цифры своих каналов из YouTube Analytics через OAuth. Токен
