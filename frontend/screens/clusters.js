@@ -5,8 +5,9 @@ import { isAdmin } from '../plan-state.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/clusters.js';
 import en from '../i18n/en/clusters.js';
+import tr from '../i18n/tr/clusters.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------- Карта ниш (08) */
 

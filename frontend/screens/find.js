@@ -4,8 +4,9 @@ import { view, base, collectForm, wireCollect, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/find.js';
 import en from '../i18n/en/find.js';
+import tr from '../i18n/tr/find.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------- Найти нишу (бесплатно) */
 

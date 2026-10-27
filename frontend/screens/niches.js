@@ -4,8 +4,9 @@ import { view, collectForm, wireCollect, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/niches.js';
 import en from '../i18n/en/niches.js';
+import tr from '../i18n/tr/niches.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------------------ Ниши */
 

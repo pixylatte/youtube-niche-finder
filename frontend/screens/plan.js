@@ -6,8 +6,9 @@ import { getMe, refreshMe } from '../plan-state.js';
 import { dict, fmtNum, fmtDate } from '../i18n.js';
 import ru from '../i18n/ru/plan.js';
 import en from '../i18n/en/plan.js';
+import tr from '../i18n/tr/plan.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 const fmt = (v, unit) => (v == null ? t('unlimited') : v === 0 ? t('none') : `${fmtNum(v)} ${unit}`);
 

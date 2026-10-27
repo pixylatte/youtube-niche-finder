@@ -4,8 +4,9 @@ import { $, api, num, compact, mult, esc, toast, tile, sectionHead, barList, tab
 import { dict } from './i18n.js';
 import ru from './i18n/ru/shared.js';
 import en from './i18n/en/shared.js';
+import tr from './i18n/tr/shared.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* render() живёт в router.js, но экраны перерисовывают себя через него после
    действий. Прямой импорт дал бы цикл router -> screens -> router, поэтому

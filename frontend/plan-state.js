@@ -5,8 +5,9 @@ import { $, api } from './ui.js';
 import { dict } from './i18n.js';
 import ru from './i18n/ru/planState.js';
 import en from './i18n/en/planState.js';
+import tr from './i18n/tr/planState.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 let me = { multiUser: false, user: null, plan: null };
 

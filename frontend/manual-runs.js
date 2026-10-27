@@ -7,8 +7,9 @@ import { api, toast } from './ui.js';
 import { dict, fmtTime } from './i18n.js';
 import ru from './i18n/ru/manualRuns.js';
 import en from './i18n/en/manualRuns.js';
+import tr from './i18n/tr/manualRuns.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 async function manualRunStatus() {
   try { return await api('/api/manual-runs'); } catch { return null; }

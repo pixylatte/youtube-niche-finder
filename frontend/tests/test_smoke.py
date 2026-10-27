@@ -40,7 +40,7 @@ ROUTES = [
     "compare/avid000,avid001",
 ]
 
-LOCALES = ["ru", "en"]
+LOCALES = ["ru", "en", "tr"]
 
 # Кириллица, допустимая в английском интерфейсе: данные из seed_demo.py
 # (название канала), а не текст интерфейса.
@@ -201,6 +201,102 @@ def test_screen_renders_without_errors(browser, base_url, route, locale):
         assert not left, f"#/{route} (en): русский текст в интерфейсе: {left}"
 
 
+
+@pytest.mark.parametrize("route,expected", [
+    ("overview", ["YouTube Brain", "Genel Bakış", "Nişleri keşfet"]),
+    ("find", ["Niş Keşfi", "Filtreleri temizle"]),
+    ("viral", ["Viral Videolar", "Küçük Kanalların Viral Videoları"]),
+    ("ideas", ["Fikir Analizi", "Video Fikri Analizi"]),
+    ("categories", ["Popüler Kategoriler"]),
+    ("keywords", ["Yükselen Anahtar Kelimeler"]),
+])
+def test_youtube_brain_turkish_navigation_and_core_screens(browser, base_url, route, expected):
+    """The Turkish browser preference renders translated core UI; quota buttons stay untouched."""
+    page = _new_page(browser, "tr")
+    errors = []
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    try:
+        page.goto(f"{base_url}/#/{route}")
+        page.wait_for_function(READY_JS, timeout=30000)
+        page.wait_for_load_state("networkidle")
+        assert page.title() == "YouTube Brain | YouTube Araştırma Merkezi"
+        assert page.locator(".brand-name").inner_text() == "YouTube Brain"
+        assert page.evaluate("document.documentElement.lang") == "tr"
+        assert page.evaluate("localStorage.getItem('nf.locale')") == "tr"
+        combined = page.inner_text("#view") + page.inner_text(".sidebar") + page.inner_text(".topbar")
+        for phrase in expected:
+            assert phrase in combined, (route, phrase, combined[:900])
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
+    """Keep original en->ru click behavior; add ru->tr without a full reload."""
+    page = _new_page(browser, "en")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS, timeout=30000)
+        page.evaluate("window.sameDoc = true")
+        page.click("#langToggle")
+        page.wait_for_function("document.documentElement.lang === 'ru'")
+        page.click("#langToggle")
+        page.wait_for_function("document.documentElement.lang === 'tr'")
+        page.wait_for_function(
+            "() => document.querySelector('#crumbSection').textContent === 'Genel Bakış'"
+        )
+        assert page.evaluate("window.sameDoc") is True
+        assert page.evaluate("localStorage.getItem('nf.locale')") == "tr"
+        assert page.inner_text(".brand-name") == "YouTube Brain"
+    finally:
+        page.context.close()
+
+
+
+def test_completed_turkish_dictionary_keys_and_placeholders(browser, base_url):
+    """Fully translated namespaces keep matching keys, plurals and template fields."""
+    namespaces = (
+        "app", "router", "overview", "find", "viral", "ideas", "categories",
+        "keywords", "shared", "channels", "tracker", "saved", "calendar", "alerts",
+        "data", "tags", "language", "clusters", "titles", "packaging", "niches",
+        "metadata", "transcripts", "enter", "compare", "manualRuns",
+        "planState", "impersonation", "plan", "hookView",
+        "ui", "account", "profile", "own", "brief", "channel", "niche",
+    )
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        dictionaries = page.evaluate("""async names => {
+            return await Promise.all(names.map(async name => {
+                const en = (await import('/i18n/en/' + name + '.js')).default;
+                const tr = (await import('/i18n/tr/' + name + '.js')).default;
+                return { name, en, tr };
+            }));
+        }""", list(namespaces))
+    finally:
+        page.context.close()
+
+    fields = lambda value: sorted(set(re.findall(r"\{(\w+)\}", str(value))))
+    errors = []
+    for entry in dictionaries:
+        namespace, en, tr = entry["name"], entry["en"], entry["tr"]
+        for key in set(en) ^ set(tr):
+            errors.append(f"{namespace}.{key}: missing Turkish/English key")
+        for key in set(en) & set(tr):
+            # Dict-valued plural strings have exactly matching plural variants.
+            if isinstance(en[key], dict) != isinstance(tr[key], dict):
+                errors.append(f"{namespace}.{key}: different plural shape")
+                continue
+            if isinstance(en[key], dict) and set(en[key]) != set(tr[key]):
+                errors.append(f"{namespace}.{key}: different plural keys")
+            def flatten(v):
+                return " ".join(str(x) for x in v.values()) if isinstance(v, dict) else str(v)
+            if fields(flatten(en[key])) != fields(flatten(tr[key])):
+                errors.append(f"{namespace}.{key}: mismatched template placeholders")
+    assert not errors, "\n".join(sorted(errors))
+
+
 def test_dictionaries_match_and_every_key_used_exists(browser, base_url):
     """У каждого неймспейса одинаковые ключи и {плейсхолдеры} в ru и en, и каждый
     t('ключ') в коде есть в словаре своего модуля."""
@@ -329,7 +425,7 @@ def test_sign_in_screen_when_multi_user_mode_has_no_session(browser, base_url):
         text = page.inner_text("#view")
     finally:
         page.context.close()
-    assert "Вход в niche-finder" in text and not problems
+    assert "Вход в YouTube Brain" in text and not problems
 
 
 

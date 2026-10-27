@@ -5,8 +5,9 @@ import { manualRunStatus, manualRunAvailable, wireManualRun } from '../manual-ru
 import { dict, fmtDate } from '../i18n.js';
 import ru from '../i18n/ru/data.js';
 import en from '../i18n/en/data.js';
+import tr from '../i18n/tr/data.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ----------------------------------------------------------------- Данные */
 

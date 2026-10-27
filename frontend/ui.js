@@ -4,8 +4,9 @@
 import { getLocale, intlLocale, dict, fmtNum, fmtDate, fmtDateTime, onLocaleChange } from './i18n.js';
 import ru from './i18n/ru/ui.js';
 import en from './i18n/en/ui.js';
+import tr from './i18n/tr/ui.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 const $ =(sel, root = document) => root.querySelector(sel);
 
@@ -20,7 +21,7 @@ const state = {
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     // X-NF-Locale: сервер отвечает текстами (подсказки, ошибки, каталог оценок) на этом языке
-    headers: { 'content-type': 'application/json', 'x-nf-locale': getLocale() },
+    headers: { 'content-type': 'application/json', 'x-nf-locale': getLocale() === 'tr' ? 'en' : getLocale() },
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });

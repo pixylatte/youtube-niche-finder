@@ -1,0 +1,1 @@
+export default { planLine:'Plan {name} · kota {used}/{limit}' };

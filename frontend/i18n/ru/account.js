@@ -1,6 +1,6 @@
 export default {
   crumb: 'Вход',
-  signInTitle: 'Вход в niche-finder',
+  signInTitle: 'Вход в YouTube Brain',
   signInSub: 'аккаунт выдаёт администратор этого сервера',
   signInSubOpen: 'войдите или создайте аккаунт',
   passwordPlaceholder: 'пароль',

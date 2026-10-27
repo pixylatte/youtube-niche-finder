@@ -4,8 +4,9 @@ import { view, plabel, base } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/tags.js';
 import en from '../i18n/en/tags.js';
+import tr from '../i18n/tr/tags.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ---------------------------------------------------- Топ теги по категориям */
 
