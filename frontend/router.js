@@ -36,8 +36,9 @@ import { routeAllowed } from './plan-state.js';
 import { dict } from './i18n.js';
 import ru from './i18n/ru/router.js';
 import en from './i18n/en/router.js';
+import tr from './i18n/tr/router.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 async function guard(fn) {
   view.innerHTML = '<div class="skeleton-page"></div>';
