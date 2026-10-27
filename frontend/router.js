@@ -66,7 +66,7 @@ const ROUTES = {
   tracker: { run: viewTracker },
   alerts: { run: viewAlerts },
   ideas: { run: viewIdeas },
-  'brain-next': { run: viewBrainNext },
+  brainNext: { run: viewBrainNext },
   language: { run: viewLanguage },
   transcripts: { run: viewTranscripts },
   clusters: { run: viewNicheClusters },
