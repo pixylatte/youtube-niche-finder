@@ -5,8 +5,9 @@ import { hookResultHtml, HOOK_FEATURE_LABEL } from '../hook_view.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/transcripts.js';
 import en from '../i18n/en/transcripts.js';
+import tr from '../i18n/tr/transcripts.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------- Транскрипты (19) */
 
