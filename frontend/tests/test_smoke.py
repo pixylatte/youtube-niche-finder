@@ -380,7 +380,7 @@ def test_sign_in_screen_when_multi_user_mode_has_no_session(browser, base_url):
         text = page.inner_text("#view")
     finally:
         page.context.close()
-    assert "Вход в niche-finder" in text and not problems
+    assert "Вход в YouTube Brain" in text and not problems
 
 
 
