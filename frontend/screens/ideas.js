@@ -4,8 +4,9 @@ import { view } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/ideas.js';
 import en from '../i18n/en/ideas.js';
+import tr from '../i18n/tr/ideas.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------- Проверка идей (17) */
 
