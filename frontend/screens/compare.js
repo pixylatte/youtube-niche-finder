@@ -4,8 +4,9 @@ import { view } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/compare.js';
 import en from '../i18n/en/compare.js';
+import tr from '../i18n/tr/compare.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------- Сравнение траекторий (план 20) */
 
