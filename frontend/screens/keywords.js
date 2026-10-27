@@ -4,8 +4,9 @@ import { view, plabel, base, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/keywords.js';
 import en from '../i18n/en/keywords.js';
+import tr from '../i18n/tr/keywords.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* --------------------------------------------------------- Ключевые слова */
 
