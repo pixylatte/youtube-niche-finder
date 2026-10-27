@@ -8,7 +8,7 @@ export default {
   tags: 'Топ теги по категориям',
   tracker: 'Трекер каналов',
   alerts: 'Алерты',
-  'brain-next': 'Решения для видео',
+  brainNext: 'Решения для видео',
   ideas: 'Проверка идей',
   language: 'Другой язык',
   transcripts: 'Транскрипты',
