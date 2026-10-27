@@ -4,8 +4,9 @@ import { view, plabel, base } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/categories.js';
 import en from '../i18n/en/categories.js';
+import tr from '../i18n/tr/categories.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------------- Категории */
 
