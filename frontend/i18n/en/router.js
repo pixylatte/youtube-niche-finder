@@ -9,7 +9,7 @@ export default {
   tracker: 'Channel tracker',
   alerts: 'Alerts',
   ideas: 'Idea check',
-  'brain-next': 'Daily video decisions',
+  brainNext: 'Daily video decisions',
   language: 'Language gaps',
   transcripts: 'Transcripts',
   clusters: 'Niche map',
