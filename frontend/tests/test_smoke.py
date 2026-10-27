@@ -201,6 +201,57 @@ def test_screen_renders_without_errors(browser, base_url, route, locale):
         assert not left, f"#/{route} (en): русский текст в интерфейсе: {left}"
 
 
+
+@pytest.mark.parametrize("route,expected", [
+    ("overview", ["YouTube Brain", "Genel Bakış", "Nişleri keşfet"]),
+    ("find", ["Niş Keşfi", "Filtreleri temizle"]),
+    ("viral", ["Viral Videolar", "Küçük Kanalların Viral Videoları"]),
+    ("ideas", ["Fikir Analizi", "Video Fikri Analizi"]),
+    ("categories", ["Popüler Kategoriler"]),
+    ("keywords", ["Yükselen Anahtar Kelimeler"]),
+])
+def test_youtube_brain_turkish_navigation_and_core_screens(browser, base_url, route, expected):
+    """The Turkish browser preference renders translated core UI; quota buttons stay untouched."""
+    page = _new_page(browser, "tr")
+    errors = []
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    try:
+        page.goto(f"{base_url}/#/{route}")
+        page.wait_for_function(READY_JS, timeout=30000)
+        page.wait_for_load_state("networkidle")
+        assert page.title() == "YouTube Brain | YouTube Araştırma Merkezi"
+        assert page.locator(".brand-name").inner_text() == "YouTube Brain"
+        assert page.evaluate("document.documentElement.lang") == "tr"
+        assert page.evaluate("localStorage.getItem('nf.locale')") == "tr"
+        combined = page.inner_text("#view") + page.inner_text(".sidebar") + page.inner_text(".topbar")
+        for phrase in expected:
+            assert phrase in combined, (route, phrase, combined[:900])
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
+    """Keep original en->ru click behavior; add ru->tr without a full reload."""
+    page = _new_page(browser, "en")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS, timeout=30000)
+        page.evaluate("window.sameDoc = true")
+        page.click("#langToggle")
+        page.wait_for_function("document.documentElement.lang === 'ru'")
+        page.click("#langToggle")
+        page.wait_for_function("document.documentElement.lang === 'tr'")
+        page.wait_for_function(
+            "() => document.querySelector('#crumbSection').textContent === 'Genel Bakış'"
+        )
+        assert page.evaluate("window.sameDoc") is True
+        assert page.evaluate("localStorage.getItem('nf.locale')") == "tr"
+        assert page.inner_text(".brand-name") == "YouTube Brain"
+    finally:
+        page.context.close()
+
+
 def test_dictionaries_match_and_every_key_used_exists(browser, base_url):
     """У каждого неймспейса одинаковые ключи и {плейсхолдеры} в ru и en, и каждый
     t('ключ') в коде есть в словаре своего модуля."""
