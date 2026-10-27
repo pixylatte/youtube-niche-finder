@@ -171,7 +171,7 @@ function viewBrainNext() {
       checkedFor = key;
       lastNiche = niche;
       drafts[key] = $('#bnIdeas')?.value || ideas.join('\n');
-      if (location.hash.startsWith('#/brain-next')) viewBrainNext();
+      if (location.hash.startsWith('#/brainNext')) viewBrainNext();
     } catch (error) {
       toast(error.message, 'err');
       btn.disabled = false;
