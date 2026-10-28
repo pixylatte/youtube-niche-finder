@@ -56,3 +56,10 @@ def test_uncollected_video_is_insufficient():
     data = assess([])
     assert data["status"] == "insufficient"
     assert data["snapshotCount"] == 0
+
+
+def test_crossing_view_count_definition_change_blocks_velocity():
+    data = assess([row(3, 120), row(9, 900)], comparability_break=True)
+    assert data["status"] == "limited"
+    assert data["reason"] == "view-count-definition-change"
+    assert data["observedFirstDayRate"] is None
