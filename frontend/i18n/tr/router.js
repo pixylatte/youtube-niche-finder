@@ -8,6 +8,7 @@ export default {
   calendar: 'İçerik Takvimi', niches: 'Nişler', enter: 'Niş Fırsatları',
   own: 'Kanallarım', data: 'Veri Merkezi', help: 'Yardım', mcp: 'MCP Bağlantısı',
   plan: 'Planım', admin: 'Yönetim', profile: 'Profil',
+  crumbChannelCompare: "Rakip Kanal Karşılaştırması",
   crumbChannel: 'Kanal', crumbBrief: 'İçerik Özeti', crumbCompare: 'Karşılaştırma',
   crumbNiche: 'Niş', loadFailed: 'Veriler yüklenemedi.',
   checkService: 'Lütfen uygulamanın çalıştığını kontrol edin:',
