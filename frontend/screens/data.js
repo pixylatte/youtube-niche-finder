@@ -81,6 +81,34 @@ function discoveryActivityCard(activity) {
       ${activity.searchQuota.callsToday === 0 ? t('discoveryNoSearchToday') + ' ' : ''}
       ${t('discoveryEvidenceWarning')}
     </div>
+    ${discoveryRunCard(activity.discoveryRun)}
+  </div>`;
+}
+
+
+
+function discoveryRunCard(run) {
+  if (!run) return `<div class="section-sub" style="margin-top:12px">
+    ${{t('discoveryRunMissing')}</div>`;
+  const time = run.recorded?.at ? esc(fmtDate(run.recorded.at)) : '—';
+  const freshness = run.recorded?.state === 'recent'
+    ? t('discoveryMarkerRecent') : t('discoveryMarkerStale');
+  return `<div class="card">
+    ${{sectionHead(t('discoveryLastRunTitle'), time + ' · ' + freshness)}
+    <div class="tiles">
+      ${{tile(t('discoveryQueriesConfigured'), num(run.configuredTopics))}
+      ${{tile(t('discoveryQueriesSucceeded'), num(run.successful))}
+      ${{tile(t('discoveryQueriesFailed'), num(run.failed + run.invalidResults))}
+      ${{tile(t('discoveryQueriesQuotaBlocked'), num(run.quotaBlocked))}
+      ${{tile(t('discoveryQueriesSkipped'), num(run.skipped))}
+      ${{tile(t('discoveryVideosFound'), num(run.videosFound))}
+      ${{tile(t('discoveryVideosProcessed'), num(run.videosProcessed))}
+      ${{tile(t('discoveryChannelProfiles'), num(run.channelProfilesReported))}
+    </div>
+    <div class="section-sub" style="margin-top:10px">
+      ${{run.configuredTopics === 0 ? t('discoveryQueriesNotConfigured') + ' ' : ''}
+      ${{t('discoveryOutcomeWarning')}
+    </div>
   </div>`;
 }
 
