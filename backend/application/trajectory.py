@@ -9,6 +9,7 @@ publishing has no start of its curve; observedFromHours says from when.
 import infrastructure.postgres as db
 from application import discovery as trends
 from domain import metrics as M
+from domain import post_publish_observations as PPO
 from domain import periods as P
 
 MAX_VIDEOS = 5
@@ -85,5 +86,6 @@ def video_trajectory(video_ids) -> dict:
                     "channelTitle": v["channel_title"], "publishedAt": v["published_at"],
                     "views": v["view_count"], "baselineMedianViews": base,
                     "observedFromHours": points[0]["ageHours"] if points else None,
+                    "observationReadiness": PPO.assess(points),
                     "points": points, "expected": expected, "marks": marks})
     return {"videos": out, "missing": [i for i in ids if i not in vids], "note": NOTE}
