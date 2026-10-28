@@ -3,6 +3,7 @@ import { $, api, q, num, compact, mult, ago, esc, toast, tile, sectionHead, noti
 import { view, nicheOverviewBlock } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
 import { channelEvidence } from '../channel-evidence.js';
+import { parseRivalBasket } from '../rival-workbench.js';
 import ru from '../i18n/ru/channel.js';
 import en from '../i18n/en/channel.js';
 import tr from '../i18n/tr/channel.js';
@@ -69,6 +70,8 @@ async function viewChannel(id) {
         }),
         `${aiLabelsBadge(a.profile.aiLabels)}
          <button class="btn btn-ghost btn-sm" id="trackThis">${t('trackBtn')}</button>
+         <button class="btn btn-ghost btn-sm" type="button" id="addToRivals">${esc(t('addRival'))}</button>
+         <a class="btn btn-ghost btn-sm" href="#/channels">${esc(t('openRivalCompare'))}</a>
          <a class="btn btn-ghost btn-sm" href="https://www.youtube.com/channel/${esc(id)}" target="_blank" rel="noopener">YouTube</a>`)}
       <div class="tiles">
         ${tile(t('tileSubs'), compact(a.profile.subscribers))}
@@ -180,6 +183,28 @@ async function viewChannel(id) {
         { label: t('colTrend'), render: (r) => (r.trend ? esc(r.trend) : '—') },
       ], vel.videos)}
     </div>`;
+
+  $('#addToRivals')?.addEventListener('click', () => {
+    if (!/^UC[A-Za-z0-9_-]{10,40}$/.test(id)) {
+      toast(t('rivalInvalidId'), 'err');
+      return;
+    }
+    let chosen = [];
+    try { chosen = parseRivalBasket(localStorage.getItem('yb.rival.workbench.v1')); }
+    catch { /* Private browsing may disallow storage. */ }
+    if (chosen.includes(id)) {
+      toast(t('rivalAlreadySelected'), 'ok');
+      return;
+    }
+    if (chosen.length >= 3) {
+      toast(t('rivalLimit'), 'err');
+      return;
+    }
+    try {
+      localStorage.setItem('yb.rival.workbench.v1', JSON.stringify([...chosen, id]));
+      toast(t('rivalAdded'), 'ok');
+    } catch { toast(t('rivalStorageUnavailable'), 'err'); }
+  });
 
   $('#trackThis')?.addEventListener('click', async () => {
     try {
