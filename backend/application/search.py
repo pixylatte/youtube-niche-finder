@@ -169,7 +169,9 @@ def niche_overview(niche: str, period: str = "all", top_n: int = 5) -> dict:
     rows = trends.load_window(period=period, niche=niche)
     if not rows:
         return {"niche": niche, "found": False,
-                "hint": "nothing collected under this slug yet -- run collect_niche"}
+                "hint": "nothing collected under this slug yet -- run collect_niche",
+                "evidenceQuality": AE.assess(
+                    [], last_collected_at=row_niche["last_collected_at"] if row_niche else None)}
 
     overview = _overview_from_rows(rows, top_n=top_n)
     # Read-only confidence in this archive sample; score remains untouched.
