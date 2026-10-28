@@ -1,4 +1,6 @@
 export default {
+  colSideBySide: "Сравнить",
+  compareAgainst: "Рядом",
   evidenceTitle: "Покрытие данных конкурента",
   evidenceSub: "Что реально известно об этом канале по локальному архиву — не вероятность успеха.",
   evidenceOpenData: "Центр данных",
