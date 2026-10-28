@@ -30,13 +30,14 @@ function archiveEvidenceBlock(data) {
   };
   const reasons = (data.reasons || []).map(reason =>
     `<li>${esc(t(reasonKeys[reason] || 'evidenceUnavailable'))}</li>`).join('');
+  const displayCount = (v) => Number.isSafeInteger(v) && v >= 0 ? num(v) : '—';
   return `<div class="card">
     ${sectionHead(t('evidenceTitle'), t(states[data.status] || 'evidenceUnavailable'))}
     <div class="tiles">
-      <div><strong>${num(data.distinctVideos ?? 0)}</strong><div class="row-sub">${t('evidenceVideos')}</div></div>
-      <div><strong>${num(data.distinctChannels ?? 0)}</strong><div class="row-sub">${t('evidenceChannels')}</div></div>
-      <div><strong>${num(data.recentVideos45d ?? 0)}</strong><div class="row-sub">${t('evidenceRecent')}</div></div>
-      <div><strong>${num(data.recentOutliers2x ?? 0)}</strong><div class="row-sub">${t('evidenceStrong')}</div></div>
+      <div><strong>${displayCount(data.distinctVideos)}</strong><div class="row-sub">${t('evidenceVideos')}</div></div>
+      <div><strong>${displayCount(data.distinctChannels)}</strong><div class="row-sub">${t('evidenceChannels')}</div></div>
+      <div><strong>${displayCount(data.recentVideos45d)}</strong><div class="row-sub">${t('evidenceRecent')}</div></div>
+      <div><strong>${displayCount(data.recentOutliers2x)}</strong><div class="row-sub">${t('evidenceStrong')}</div></div>
     </div>
     ${reasons ? `<ul class="digest-list">${reasons}</ul>` : ''}
     <p class="section-sub">${t('evidenceCaveat')}</p>
