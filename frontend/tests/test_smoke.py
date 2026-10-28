@@ -900,3 +900,34 @@ def test_brain_next_competitor_format_repeatability_uses_local_gets_only(browser
         assert not errors, errors
     finally:
         page.context.close()
+
+def test_brain_next_trajectory_displays_measured_intervals_not_24h_claims(browser, base_url):
+    """Observation caveats use only local trajectory data."""
+    import json
+
+    videos = [
+        {"videoId": "abcdefghijk", "title": "Source A", "channelId": None,
+         "views": 1000, "points": [], "expected": [], "marks": [],
+         "baselineMedianViews": None,
+         "observationReadiness": {
+             "status": "observed-interval",
+             "observedFirstDayRate": {
+                 "fromHours": 3, "toHours": 21, "viewsPerHour": 48.6}}},
+        {"videoId": "lmnopqrstuv", "title": "Source B", "channelId": None,
+         "views": 900, "points": [], "expected": [], "marks": [],
+         "baselineMedianViews": None,
+         "observationReadiness": {"status": "limited", "observedFirstDayRate": None}},
+    ]
+    page = _new_page(browser, "tr")
+    page.route("**/api/videos/trajectory*", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body=json.dumps({"missing": [], "videos": videos, "note": "sample"})))
+    try:
+        page.goto(f"{base_url}/#/compare/abcdefghijk,lmnopqrstuv")
+        page.get_by_text("Gerçek arşiv ölçümü:", exact=False).first.wait_for()
+        result = page.locator("#view").inner_text()
+        assert "3–21" in result
+        assert "Tam 24 saatlik sonuç değildir" in result
+        assert "iki karşılaştırılabilir gerçek ölçüm yok" in result
+    finally:
+        page.context.close()
