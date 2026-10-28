@@ -4,6 +4,7 @@ import { api, q, num, compact, esc, sectionHead, empty, notice, state } from '..
 import { view } from '../shared.js';
 import { dict } from '../i18n.js';
 import { normalizeChannelIds } from '../channel-compare-utils.js';
+import { mountFormatReview } from '../rival-format-review.js';
 import ru from '../i18n/ru/channelCompare.js';
 import en from '../i18n/en/channelCompare.js';
 import tr from '../i18n/tr/channelCompare.js';
@@ -66,7 +67,8 @@ async function viewChannelCompare(raw) {
     ${missing.length ? notice(esc(t('missing', { ids: missing.join(', ') })), 'warn') : ''}
     ${found.length ? comparisonTable(found) : empty(t('noData'))}
     <div class="section-sub channel-compare-note">${esc(t('periodNote', { period: state.period }))}</div>
-  </div>`;
+  </div><div id="compareFormatReviewHost"></div>`;
+  if (found.length) mountFormatReview(view.querySelector('#compareFormatReviewHost'), results, t);
 }
 
 export { viewChannelCompare };
