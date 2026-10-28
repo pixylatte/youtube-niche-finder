@@ -12,9 +12,10 @@ const t = dict({ ru, en, tr });
 /* ----------------------------------------------------------------- Данные */
 
 async function viewData() {
-  const [h, cov, fresh, runs] = await Promise.all([
+  const [h, cov, fresh, runs, discovery] = await Promise.all([
     api('/api/health'), api(`/api/coverage${q({ period: state.period })}`),
-    api('/api/freshness').catch(() => null), manualRunStatus()]);
+    api('/api/freshness').catch(() => null), manualRunStatus(),
+    api('/api/discovery-activity').catch(() => null)]);
   view.innerHTML = `
     ${h.hasApiKey ? notice(t('apiKeyOk'), 'ok')
                   : notice(t('apiKeyMissing'), 'error')}
@@ -32,6 +33,7 @@ async function viewData() {
       </div>
     </div>
     ${freshnessCard(fresh)}
+    ${discoveryActivityCard(discovery)}
     <div id="costProfiles"></div>
     ${collectForm()}
     ${manualRunAvailable(runs, 'refresh') ? `<div class="card">
@@ -51,6 +53,37 @@ async function viewData() {
     });
   }
 }
+
+/* Scheduler metadata is not evidence that a YouTube search succeeded. */
+function discoveryActivityCard(activity) {
+  if (!activity) return '';
+  const status = (entry) => ({
+    recent: t('discoveryMarkerRecent'),
+    stale: t('discoveryMarkerStale'),
+    clock_skew: t('discoveryMarkerFuture'),
+    invalid: t('discoveryMarkerInvalid'),
+    missing: t('discoveryMarkerMissing'),
+  }[entry?.state] || t('discoveryMarkerMissing'));
+  const stamp = (entry) => entry?.at ? esc(fmtDate(entry.at)) : '—';
+  return `<div class="card">
+    ${sectionHead(t('discoveryActivityTitle'), t('discoveryActivitySub'))}
+    <div class="tiles">
+      ${tile(t('discoveryDailyMarker'), stamp(activity.dailySchedulerMarker),
+              status(activity.dailySchedulerMarker))}
+      ${tile(t('discoveryTopicMarker'), stamp(activity.topicSchedulerMarker),
+              status(activity.topicSchedulerMarker))}
+      ${tile(t('discoverySearchToday'), num(activity.searchQuota.callsToday),
+              t('discoverySearchRemaining', { count: num(activity.searchQuota.callsLeft) }))}
+      ${tile(t('discoveryUnitsToday'), num(activity.unitQuota.unitsToday),
+              t('discoveryUnitsRemaining', { count: num(activity.unitQuota.unitsLeft) }))}
+    </div>
+    <div class="section-sub" style="margin-top:10px">
+      ${activity.searchQuota.callsToday === 0 ? t('discoveryNoSearchToday') + ' ' : ''}
+      ${t('discoveryEvidenceWarning')}
+    </div>
+  </div>`;
+}
+
 
 /* План 30: профили расходов -- сколько стоит сделать одно видео (озвучка, монтаж,
    ИИ-генерация, стоки) и постоянные расходы в месяц. Личные: у каждого свои. */
