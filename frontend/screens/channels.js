@@ -45,7 +45,7 @@ function rivalComparisonCard(ids, results) {
     return { id: ids[i], data };
   });
   const missing = resolved.filter((r) => !r.data).length;
-  const period = state.period;
+  const period = plabel(state.period);
   const columns = [
     { label: t('compareMetric'), wrap: true, render: (r) => esc(r.label) },
     ...resolved.map(({ id, data }) => ({
