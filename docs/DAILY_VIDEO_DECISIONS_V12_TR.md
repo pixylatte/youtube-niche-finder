@@ -37,6 +37,17 @@ videoların başlığını kullanmak ya da taklit etmek önerilmez.
   dinî bilgiler için ayet, güvenilir hadis kaynakları ve uygun ilmî
   yorumlar doğrulanmadan üretim kararı kesinleştirilmez.
 
+### Türkçe İ karakteri ve mevcut arşiv
+
+Mevcut `collecting.slugify`, `"1 Dakika İslam"` yazımında büyük İ harfini
+`"i" + birleşik nokta` biçimine çevirir; regex birleşik noktayı ayırdığı
+için niş anahtarı `1-dakika-i-slam-...` olur. Latin `I` ile yazılmış
+`"1 Dakika Islam"` ise `1-dakika-islam-...` olur.
+
+**Her iki anahtar da aynı İslam çalışma profiline aittir.**
+Bu uyumluluk için mevcut PostgreSQL verilerini yeniden yazmaya veya
+ham arşivde göç/migration işlemine gerek yoktur.
+
 ## Güvenlik ve maliyet sınırları
 
 \`application/daily_decisions.py\`, \`domain/daily_decisions.py\`, \`search_outliers\`
