@@ -2,7 +2,7 @@
  * Reuses the already implemented /api/videos/:id/repeatability endpoint.
  * At most one representative long-form video per compared channel (max 3).
  */
-import { api, esc, num } from './ui.js';
+import { api, esc } from './ui.js';
 import { representativeVideos, repeatabilityEvidence } from './rival-formats.js';
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
