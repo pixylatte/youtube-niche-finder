@@ -333,12 +333,23 @@ def cycle():
         _mark("thumb_embed")
 
     if DO_TOPIC_SEARCH and _due("topic_search", TOPIC_SEARCH_INTERVAL_MIN):
-        # each topic is searched once a day at most (topic_watch.SEARCH_EVERY_HOURS);
-        # running every few hours just picks up topics as they fall due
+        # These opted-in topics are different from WORKER_QUERIES. They have
+        # their own completed result record and may discover *new* video ids.
         if _search_quota_blocked_today():
             log("topic search: skipped, search.list quota already exhausted today")
+            status, result = "skipped", None
         else:
-            _safe("topic search", lambda: topic_mod.search_topics(API_KEY))
+            capture = {}
+            result = _safe("topic search", lambda: topic_mod.search_topics(API_KEY),
+                           capture=capture)
+            status = capture.get("outcome", "failed")
+            if status == "ok" and not isinstance(result, dict):
+                status = "invalid_result"
+        try:
+            outcome = discovery_activity_mod.build_topic_result(status, result)
+            _set_meta("worker_topic_search_last_result", json.dumps(outcome))
+        except Exception as e:
+            log(f"topic search activity: summary unavailable ({type(e).__name__})")
         _mark("topic_search")
 
     if DO_FRESHNESS and _due("freshness", FRESHNESS_INTERVAL_MIN):
