@@ -84,10 +84,10 @@ from application import transcripts as TR
 from application import two_factor as TF
 from application import users_admin as UA
 from domain import editorial_readiness as EDR
-from domain import production_outline as PROD
 from domain import i18n
 from domain import manual_runs as DMR
 from domain import plans as PD
+from domain import production_outline as PROD
 from domain.i18n import tr
 from domain.users import LOCAL_USER_ID, multi_user_enabled
 from infrastructure import mailer, quota_owner
