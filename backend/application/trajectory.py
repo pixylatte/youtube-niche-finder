@@ -86,6 +86,8 @@ def video_trajectory(video_ids) -> dict:
                     "channelTitle": v["channel_title"], "publishedAt": v["published_at"],
                     "views": v["view_count"], "baselineMedianViews": base,
                     "observedFromHours": points[0]["ageHours"] if points else None,
-                    "observationReadiness": PPO.assess(points),
+                    "observationReadiness": PPO.assess(
+                        points, comparability_break=any(
+                            mark["kind"] == "view_count_change" for mark in marks)),
                     "points": points, "expected": expected, "marks": marks})
     return {"videos": out, "missing": [i for i in ids if i not in vids], "note": NOTE}
