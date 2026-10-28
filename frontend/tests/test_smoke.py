@@ -327,7 +327,7 @@ def test_turkish_help_and_mcp_panels_use_localised_labels(browser, base_url, rou
         assert not problems, problems
         if route == "mcp":
             assert "docker compose" in content
-            assert "Authorization: Bearer" in content
+            assert "niche-finder" in content
     finally:
         page.context.close()
 
