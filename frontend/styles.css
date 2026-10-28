@@ -956,3 +956,64 @@ select, input[type="text"], input[type="number"], input[type="email"], input[typ
   .rival-choice { gap: 4px; }
   .rival-choice-check { padding: 0 3px; }
 }
+
+/* YouTube Brain — read-only cross-channel format repeatability research. */
+.rival-format-actions {
+  border-top: 1px solid var(--border);
+  padding-top: 15px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rival-format-actions .section-sub { flex: 1 1 260px; line-height: 1.55; }
+#rivalFormatResults:not(:empty) {
+  display: block;
+  padding-top: 10px;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.rival-format-report { display: grid; gap: 13px; }
+.rival-format-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(245px, 100%), 1fr));
+  gap: 12px;
+}
+.rival-format-entry {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 9px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  min-width: 0;
+}
+.rival-format-entry h3 {
+  font-size: 14px;
+  font-weight: 760;
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.rival-format-entry .rival-format-source { font-size: 13.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.rival-format-topline { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.rival-format-note { font-size: 12.5px; color: var(--ink-2); margin: 0; line-height: 1.6; }
+.rival-format-examples {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding-inline-start: 18px;
+  margin: 1px 0 3px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.rival-format-examples li { overflow-wrap: anywhere; }
+.rival-format-examples li span { display: inline-block; margin-inline-start: 5px; }
+.rival-format-report .rival-caveat { border-top: 1px solid var(--border); padding-top: 12px; }
+@media (max-width: 650px) {
+  .rival-format-actions > .btn { width: 100%; }
+}
