@@ -68,7 +68,7 @@ def _is_distinct_angle(angle, reference_title):
     # It must not be a copy or merely the reference title with a short suffix.
     similarity = len(angle_words & source_words) / len(angle_words | source_words)
     additions = angle_words - source_words
-    superficial_suffix = source_words.issubset(angle_words) and len(additions) < 4
+    superficial_suffix = source_words.issubset(angle_words) and len(additions) <= 4
     return (angle.casefold() != reference_title.casefold()
             and similarity < 0.8 and not superficial_suffix)
 
