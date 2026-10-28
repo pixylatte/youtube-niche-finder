@@ -107,10 +107,10 @@ function rivalFormatReport(representatives, responses) {
   };
   const count = (n) => n == null ? '—' : num(n);
   const cards = representatives.map((source, i) => {
-    if (!source.videoId) return \`<article class="rival-format-entry">
-      <h3>\${esc(source.channelTitle)}</h3>
-      <p class="rival-format-note">\${esc(t('formatNoSource'))}</p>
-    </article>\`;
+    if (!source.videoId) return `<article class="rival-format-entry">
+      <h3>${esc(source.channelTitle)}</h3>
+      <p class="rival-format-note">${esc(t('formatNoSource'))}</p>
+    </article>`;
     const result = responses[i];
     const hasResult = result?.status === 'fulfilled';
     const facts = hasResult ? repeatabilityEvidence(result.value) : null;
@@ -124,32 +124,32 @@ function rivalFormatReport(representatives, responses) {
         videos: count(facts.similarVideos),
       }) : t('formatRequestFailed');
     const examples = facts?.examples?.length
-      ? \`<ul class="rival-format-examples">\${facts.examples.map((m) =>
-        \`<li><a href="https://www.youtube.com/watch?v=\${encodeURIComponent(m.videoId)}"
-            target="_blank" rel="noopener">\${esc(m.title)}</a>
-          \${m.channelTitle ? \`<span>\${esc(m.channelTitle)}</span>\` : ''}
-          \${m.outlierScore != null ? \`<span>×\${num(m.outlierScore)}</span>\` : ''}
-        </li>\`).join('')}</ul>\` : '';
-    return \`<article class="rival-format-entry">
-      <h3>\${esc(source.channelTitle)}</h3>
-      <a class="rival-format-source" href="https://www.youtube.com/watch?v=\${encodeURIComponent(source.videoId)}"
-        target="_blank" rel="noopener">\${esc(source.title || source.videoId)}</a>
+      ? `<ul class="rival-format-examples">${facts.examples.map((m) =>
+        `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(m.videoId)}"
+            target="_blank" rel="noopener">${esc(m.title)}</a>
+          ${m.channelTitle ? `<span>${esc(m.channelTitle)}</span>` : ''}
+          ${m.outlierScore != null ? `<span>×${num(m.outlierScore)}</span>` : ''}
+        </li>`).join('')}</ul>` : '';
+    return `<article class="rival-format-entry">
+      <h3>${esc(source.channelTitle)}</h3>
+      <a class="rival-format-source" href="https://www.youtube.com/watch?v=${encodeURIComponent(source.videoId)}"
+        target="_blank" rel="noopener">${esc(source.title || source.videoId)}</a>
       <div class="rival-format-topline">
-        <span class="chip \${cls}">\${esc(t(label))}</span>
-        \${source.outlierScore != null
-          ? \`<span class="section-sub">\${esc(t('formatSourceMultiplier', { x: source.outlierScore }))}</span>\` : ''}
+        <span class="chip ${cls}">${esc(t(label))}</span>
+        ${source.outlierScore != null
+          ? `<span class="section-sub">${esc(t('formatSourceMultiplier', { x: source.outlierScore }))}</span>` : ''}
       </div>
-      <p class="rival-format-note">\${esc(detail)}</p>
-      \${examples}
-      <a class="btn btn-ghost btn-sm" href="#/brief/\${encodeURIComponent(source.videoId)}">
-        \${esc(t('formatOpenBrief'))}</a>
-    </article>\`;
+      <p class="rival-format-note">${esc(detail)}</p>
+      ${examples}
+      <a class="btn btn-ghost btn-sm" href="#/brief/${encodeURIComponent(source.videoId)}">
+        ${esc(t('formatOpenBrief'))}</a>
+    </article>`;
   });
-  return \`<div class="rival-format-report">
-    \${sectionHead(t('formatReportTitle'), t('formatReportSub'))}
-    <div class="rival-format-grid">\${cards.join('')}</div>
-    <p class="rival-caveat">\${esc(t('formatCaveat'))}</p>
-  </div>\`;
+  return `<div class="rival-format-report">
+    ${sectionHead(t('formatReportTitle'), t('formatReportSub'))}
+    <div class="rival-format-grid">${cards.join('')}</div>
+    <p class="rival-caveat">${esc(t('formatCaveat'))}</p>
+  </div>`;
 }
 
 /* --------------------------------------------------------- Outlier-каналы */
@@ -264,7 +264,7 @@ async function viewChannels() {
               try {
                 // Read-only local analysis: other channels across our WHOLE archive.
                 // Sequential on purpose: cap expensive embedding/DB evaluations.
-                const data = await api(\`/api/videos/\${encodeURIComponent(source.videoId)}/repeatability\`);
+                const data = await api(`/api/videos/${encodeURIComponent(source.videoId)}/repeatability`);
                 evaluations.push({ status: 'fulfilled', value: data });
               } catch (error) {
                 evaluations.push({ status: 'rejected', reason: error });
