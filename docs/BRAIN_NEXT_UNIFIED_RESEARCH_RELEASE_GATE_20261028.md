@@ -18,6 +18,7 @@
 | Günlük araştırma referansları | iki editoryal kanal profili için ayrı, yerel veri tabanlı, uydurma önerisiz değerlendirme | v12 temelinde |
 | Eski Brain'den fırsat **kanıtı kalitesi** | benzersiz video/kanal, son 45 gün yayınları, >=2× outlier, ayrı arşiv toplama tazeliği | Bu dalda Python'a taşındı |
 | Eski sistemdeki ortak kota güvenliği | Niche Finder'ın kendi PostgreSQL atomik `_reserve` ve `test_quota_concurrency.py` vardır | Tekrar kopyalanmadı; mevcut kod/test korunur |
+| Eski post-publish gözlem güvenilirliği | Gerçek snapshot saatlerinden ilk gün ölçülen izlenme artışı; sahte 1h/24h checkpoint yok | Bu dalda yerel `post_publish_observations.py` ile adapte edildi |
 | Eski yayın sonrası hız ve istatistik | Yeni sistemde `trajectory.py`, `video_stats_history`, `own_channels.py` OAuth Analytics ve otomatik istatistikler vardır | Tekrar yazılmadı, doğrudan aktarılmadı |
 | Eski VDS kontrol ve özel imza araçları | Farklı makine, farklı kimlik ve mimari; Niche Finder Docker hizmeti | **Taşınmadı**: güvenlik sınırı |
 | Yeni sistemin v13–v14 üretim motoru | kullanıcının araştırma sistemi hedefinin dışında | **Taşınmadı** |
@@ -43,6 +44,16 @@ Var olan `GET /api/niches/{slug}` yanıtı `evidenceQuality` alanını
 kazandı; nicel niş sıralaması ve başarı skorları **değişmez**. UI
 TR/EN/RU destekler. Son arşiv toplama işareti bütün rakiplerin güncel
 ölçümünü kanıtlamaz.
+
+## Üretim sonrası ölçüm uyarlaması
+
+Eski Brain'in 1h/6h/24h/72h gözlem pencereleri birebir kopyalanmadı;
+Niche Finder mevcut worker geçmişinde ölçümler yaklaşık üç saatte bir
+olabiliyor. `domain/post_publish_observations.py` yalnız gerçekten
+gözlenen iki saat aralığından izlenme/saat hesaplar. 24 saatlik toplam ve
+eksik checkpoint değerleri icat edilmez. 2026-08-24 izlenme sayım yöntemi
+değişimi aralığa denk gelirse ölçüm bloke edilir. Var olan video trajectory
+API/karşılaştırma ekranında kullanılır; yeni kota harcaması yok.
 
 ## Canlıya alma kapısı (henüz açılmadı)
 
