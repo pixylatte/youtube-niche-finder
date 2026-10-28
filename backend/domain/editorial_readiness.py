@@ -67,7 +67,10 @@ def _is_distinct_angle(angle, reference_title):
         return False
     # It must not be a copy or merely the reference title with a short suffix.
     similarity = len(angle_words & source_words) / len(angle_words | source_words)
-    return angle.casefold() != reference_title.casefold() and similarity < 0.8
+    additions = angle_words - source_words
+    superficial_suffix = source_words.issubset(angle_words) and len(additions) < 4
+    return (angle.casefold() != reference_title.casefold()
+            and similarity < 0.8 and not superficial_suffix)
 
 
 def evaluate(payload):
@@ -105,11 +108,13 @@ def evaluate(payload):
                              "reviewedByUser": source.get("reviewed", False)})
 
     # A reference video is a competitor example, not independent factual proof.
+    reference_hosts = ("youtube.com", "youtu.be", "tiktok.com", "instagram.com")
     reviewed = [
         s for s in safe_sources
-        if s["reviewedByUser"] and s["domain"] not in {
-            "youtube.com", "youtu.be", "tiktok.com", "instagram.com",
-        }
+        if s["reviewedByUser"] and not any(
+            s["domain"] == host or s["domain"].endswith("." + host)
+            for host in reference_hosts
+        )
     ]
     domains = {s["domain"] for s in reviewed}
     types = {s["type"] for s in reviewed}
