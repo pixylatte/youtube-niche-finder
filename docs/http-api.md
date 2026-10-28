@@ -36,9 +36,9 @@ The dashboard and the Chrome extension talk to the backend through these 167 rou
 |---|---|---|---|---|
 | `GET /api/health` | Backend status: database counts, whether the YouTube key is set, remaining search calls and units today. | -- | free | `db_stats` |
 | `GET /api/discovery-activity` | Read-only worker scheduler markers and separate search/unit counters; never proof of discovery success. | -- | free | -- |
-| `GET /api/daily-decisions` | Two editorial workspaces: local-archive video research references and evidence gaps; no YouTube or LLM quota. | query: `profile='kayip'`, `period='30d'`, `limit=5` | free | -- |
 | `GET /api/stats` | What is in the database right now (same numbers as the `db_stats` tool). | -- | free | `db_stats` |
 | `GET /api/coverage` | Whether the database has enough data for a period (videos in the window, with a category, with snapshots) -- call it when a section comes back empty. | query: `period='24h'` | free | -- |
+| `GET /api/daily-decisions` | Two editorial workspaces: local-archive video research references and evidence gaps; no YouTube or LLM quota. | query: `profile='kayip'`, `period='30d'`, `limit=5` | free | -- |
 | `GET /api/overview` | Everything the Overview screen needs in one request (viral videos, outlier channels, categories, keywords, competition). | query: `period='24h'`, `niche=None` | free | -- |
 | `GET /api/freshness` | How many stored videos and channels were not re-read for REFRESH_STALE_DAYS, and since when the history goes back (plan 16). | -- | free | -- |
 
