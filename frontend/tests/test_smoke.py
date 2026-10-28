@@ -256,6 +256,88 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
 
 
 
+
+
+def test_brain_niche_evidence_table_does_not_call_coverage_confidence(browser, base_url):
+    """The ranking page shows exact sample sizes and a visible unscored reason."""
+    page = _new_page(browser, "tr")
+    fake = {
+        "niches": [
+            {
+                "niche": "history", "label": "History", "videos": 60, "channels": 6,
+                "recentVideos": 26, "score": 61, "band": "high", "coverage": 0.8,
+                "status": "stable", "confidence": "good",
+                "breakdown": [
+                    {"key": k, "value": 1 if i < 4 else None,
+                     "points": 50 if i < 4 else None, "weight": w, "label": k}
+                    for i, (k, w) in enumerate([
+                        ("demand", 25), ("supply", 20), ("newcomers", 20),
+                        ("rpm", 15), ("template", 10), ("policy", 10)])
+                ]
+            },
+            {
+                "niche": "thin", "label": "Thin", "videos": 3, "channels": 1,
+                "recentVideos": 1, "score": None, "band": None,
+                "coverage": 0.4, "reason": "insufficient-data",
+                "status": "insufficient-data", "confidence": "insufficient",
+                "breakdown": [
+                    {"key": k, "value": None, "points": None,
+                     "weight": w, "label": k}
+                    for k, w in [
+                        ("demand", 25), ("supply", 20), ("newcomers", 20),
+                        ("rpm", 15), ("template", 10), ("policy", 10)]
+                ]
+            },
+        ]
+    }
+    import json
+    page.route("**/api/niches/ranking*", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body=json.dumps(fake, ensure_ascii=False)))
+    problems = []
+    page.on("pageerror", lambda err: problems.append(str(err)))
+    try:
+        page.goto(f"{base_url}/#/enter")
+        page.wait_for_function(READY_JS)
+        page.wait_for_selector(".niche-evidence-line")
+        txt = page.inner_text("#view")
+        assert "60 video · 6 kanal · son 30 günde 26 video" in txt
+        assert "3 video · 1 kanal · son 30 günde 1 video" in txt
+        assert "Bilinen ölçüt ağırlığı: %80" in txt
+        assert "Bilinen ölçüt ağırlığı: %40" in txt
+        assert "yeterli veri yok: niş eğilimi hesaplanamıyor" in txt
+        assert "istatistiksel güven" in page.locator(".evidence-weight").first.get_attribute("data-tip")
+        assert not problems, problems
+    finally:
+        page.context.close()
+
+
+def test_brain_niche_evidence_unknown_and_zero_are_not_rounded_into_claims(browser, base_url):
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        results = page.evaluate("""async () => {
+            const { evidence } = await import('/niche-evidence.js');
+            return [
+                evidence({videos: 0, channels: 0, recentVideos: 0, score: 0,
+                    coverage: 0, breakdown: []}),
+                evidence({videos: 3, channels: undefined, recentVideos: null,
+                    score: null, coverage: undefined}),
+                evidence({videos: 10, channels: -2, recentVideos: 900,
+                    score: null, coverage: 2, reason: 'not-known'}),
+            ];
+        }""")
+        zero, missing, invalid = results
+        assert zero["hasScore"] is True and zero["knownWeightPct"] == 0
+        assert zero["distinctChannels"] == 0 and zero["recentVideos"] == 0
+        assert missing["distinctChannels"] is None and missing["knownWeightPct"] is None
+        assert invalid["distinctChannels"] is None and invalid["knownWeightPct"] is None
+        assert invalid["missingReason"] is None
+    finally:
+        page.context.close()
+
+
 def test_brain_archive_coverage_is_global_and_visible(browser, base_url):
     """Evidence metadata is clearly scoped and does not pretend to be a niche-specific score."""
     page = _new_page(browser, "tr")
