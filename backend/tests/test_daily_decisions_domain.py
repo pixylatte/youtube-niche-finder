@@ -19,13 +19,13 @@ def item(id, niche="kayıp-sayfalar-osmanlı", channel="UC-Test-1", views=5000,
 def test_only_editorially_labeled_niches_are_used():
     data = [
         {"slug": "kayıp-sayfalar-osmanlı", "label": "Osmanlı", "video_count": 40},
-        {"slug": "1-dakika-i-slam-kissalar", "label": "Kıssalar", "video_count": 80},
+        {"slug": "1-dakika-islam-kissalar", "label": "Kıssalar", "video_count": 80},
         {"slug": "trending-tr", "label": "Other", "video_count": 500},
     ]
     assert [x["slug"] for x in D.select_niches(data, "kayip")] == [
         "kayıp-sayfalar-osmanlı"]
     assert [x["slug"] for x in D.select_niches(data, "islam")] == [
-        "1-dakika-i-slam-kissalar"]
+        "1-dakika-islam-kissalar"]
 
 
 def test_no_matching_niches_does_not_invent_video_ideas():
@@ -98,3 +98,27 @@ def test_profile_format_and_source_verification_are_explicit():
         assert result["format"] == fmt
         assert result["verificationRequired"]
         assert result["provenance"] == "local-archived-youtube-metrics-only"
+
+
+
+def test_1_dakika_islam_niche_matches_collector_slugify():
+    from application.collecting import slugify
+
+    slug = slugify("1 Dakika İslam - kıssalar")
+    assert slug == "1-dakika-islam-kıssalar"
+    niches = D.select_niches([{"slug": slug, "video_count": 12}], "islam")
+    assert len(niches) == 1
+
+
+def test_cannot_mix_short_and_long_format_or_cross_profile_evidence():
+    long_niche = "kayıp-sayfalar-osmanlı"
+    short_niche = "1-dakika-islam-kıssalar"
+    rows = [
+        item("abcdefghijk", niche=long_niche, channel="UC1", is_short=False),
+        item("abcdefghijl", niche=short_niche, channel="UC2", is_short=True),
+        item("abcdefghijm", niche=short_niche, channel="UC3", is_short=False),
+    ]
+    short = D.rank("islam", "30d", 8, [{"slug": short_niche}], rows)
+    assert [r["videoId"] for r in short["candidates"]] == ["abcdefghijl"]
+    long = D.rank("kayip", "30d", 8, [{"slug": long_niche}], rows)
+    assert [r["videoId"] for r in long["candidates"]] == ["abcdefghijk"]
