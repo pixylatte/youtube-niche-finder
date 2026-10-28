@@ -14,7 +14,7 @@ fail() { echo "RELEASE BLOCKED: $*" >&2; exit 1; }
 [[ "$#" == 1 && "$1" =~ ^[0-9a-f]{40}$ ]] || fail "A pinned 40-character commit is required"
 TARGET="$1"
 [[ "$(id -u)" == 0 ]] || fail "Run as root on the second VDS"
-for cmd in git tar curl docker python3 mktemp cp cmp grep date find; do
+for cmd in git tar curl docker python3 mktemp cp cmp grep date find seq sleep; do
   command -v "$cmd" >/dev/null || fail "Missing $cmd"
 done
 [[ -d "$APP/.git" && -d "$APP/frontend" && -f "$APP/backend/application/niche_ranking.py" ]] || fail "Unexpected installation directory"
@@ -149,6 +149,7 @@ web_ready || fail "New site unhealthy after readiness checks"
 curl -fsS --max-time 10 "$WEB/" > "$stage/home.html" || fail "Homepage failed"
 grep -Fq 'id="langSelect"' "$stage/home.html" || fail "Language switch missing"
 grep -Fq 'data-group="research"' "$stage/home.html" || fail "Grouped navigation missing"
+grep -Fq 'yb-batch-3-7' "$stage/home.html" || fail "Versioned stylesheet or entrypoint missing"
 for file in channel-evidence.js coverage-insights.js niche-evidence.js i18n/tr/help.js i18n/tr/mcp.js i18n/tr/admin.js; do
   curl -fsS --max-time 10 "$WEB/$file" > "$stage/served.js" || fail "Asset unavailable: $file"
   cmp -s "$stage/served.js" "$stage/target/frontend/$file" || fail "Wrong asset served: $file"
