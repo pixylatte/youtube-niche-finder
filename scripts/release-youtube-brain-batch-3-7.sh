@@ -14,7 +14,7 @@ fail() { echo "RELEASE BLOCKED: $*" >&2; exit 1; }
 [[ "$#" == 1 && "$1" =~ ^[0-9a-f]{40}$ ]] || fail "A pinned 40-character commit is required"
 TARGET="$1"
 [[ "$(id -u)" == 0 ]] || fail "Run as root on the second VDS"
-for cmd in git tar curl docker python3 mktemp cp cmp grep date find seq sleep; do
+for cmd in git tar curl docker python3 mktemp cp cmp grep date find seq sleep timeout; do
   command -v "$cmd" >/dev/null || fail "Missing $cmd"
 done
 [[ -d "$APP/.git" && -d "$APP/frontend" && -f "$APP/backend/application/niche_ranking.py" ]] || fail "Unexpected installation directory"
@@ -154,14 +154,24 @@ for file in channel-evidence.js coverage-insights.js niche-evidence.js i18n/tr/h
   curl -fsS --max-time 10 "$WEB/$file" > "$stage/served.js" || fail "Asset unavailable: $file"
   cmp -s "$stage/served.js" "$stage/target/frontend/$file" || fail "Wrong asset served: $file"
 done
-curl -fsS --max-time 30 "$WEB/api/niches/ranking" > "$stage/ranking.json" || fail "Niche ranking endpoint failed"
-python3 - "$stage/ranking.json" <<'PY'
-import json,sys
-with open(sys.argv[1],encoding="utf-8") as f: data=json.load(f)
-assert isinstance(data.get("niches"),list), "Niches field missing"
-assert all(type(r.get("channels")) is int and r["channels"]>=0 for r in data["niches"]), \
-    "Distinct channel counts are missing or invalid"
-print("Backend ranking and distinct channel counts: PASS")
+# This endpoint is protected in NF_MULTI_USER=1: unauthenticated HTTP 401
+# is expected, not an application failure. Exercise the EXACT same read-only
+# business function in the existing web container instead; never use or expose
+# an auth token, loosen access controls, touch .env, or consume YouTube quota.
+# The command reads only the local Postgres archive, and has a finite timeout.
+timeout 120s docker exec -i niche-finder-web python - <<'PY' || fail "Niche ranking backend verification failed"
+import importlib
+import pathlib
+
+module = importlib.import_module("application.niche_ranking")
+module_path = pathlib.Path(module.__file__).resolve()
+assert str(module_path).startswith("/app/"), "Backend is not loaded from the expected mount"
+result = module.rank_niches()
+rows = result.get("niches")
+assert isinstance(rows, list), "Niche ranking did not return a list"
+assert all(type(row.get("channels")) is int and row["channels"] >= 0
+           for row in rows), "Niche ranking is missing distinct channel counts"
+print("Backend ranking and distinct channel counts: PASS ({} niches)".format(len(rows)))
 PY
 applied=0
 echo "BATCH RELEASE OK: YouTube Brain PR3-7 running on :18080"
