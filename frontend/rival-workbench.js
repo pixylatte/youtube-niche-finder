@@ -4,6 +4,7 @@
  */
 const value = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null;
 const integer = (v) => Number.isSafeInteger(v) && v >= 0 ? v : null;
+const signed = (v) => typeof v === 'number' && Number.isFinite(v) ? v : null;
 
 function rivalSnapshot(data = {}) {
   const p = data.profile || {};
@@ -24,12 +25,13 @@ function rivalSnapshot(data = {}) {
     lifetimeUploadsWeekly: value(c.uploadsPerWeekLifetime),
     shortsCount: integer(c.shortsCount),
     longformCount: integer(c.longformCount),
-    shortsShare: value(c.shortsSharePercent) <= 100 ? value(c.shortsSharePercent) : null,
+    shortsShare: value(c.shortsSharePercent) != null && c.shortsSharePercent <= 100
+      ? c.shortsSharePercent : null,
     shortsMedianViews: value(perf.shortsMedianViews),
     longformMedianViews: value(perf.longformMedianViews),
     medianViews: value(perf.medianViewsPerVideo),
-    viewsPerDay30d: value(g.views?.per_day),
-    subscribersPerDay30d: value(g.subscribers?.per_day),
+    viewsPerDay30d: signed(g.views?.per_day),
+    subscribersPerDay30d: signed(g.subscribers?.per_day),
     bestOutlier: Array.isArray(data.topOutliers)
       ? value(data.topOutliers[0]?.outlierScore) : null,
     snapshots: integer(data.snapshots),
