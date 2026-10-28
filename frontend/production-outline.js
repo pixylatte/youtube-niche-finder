@@ -96,7 +96,17 @@ async function requestProductionOutline(panel, payload) {
   try {
     const result = await api('/api/editorial/production-plan', { method: 'POST', body: payload });
     if (!button.isConnected || !target.isConnected) return;
-    target.innerHTML = productionPlanHtml(result);
+    target.innerHTML = productionPlanHtml(result)
+      + '<button type="button" class="btn btn-ghost" id="bnCopyProductionJson">'
+      + 'Remotion/Codex için plan JSON’unu kopyala</button>';
+    target.querySelector('#bnCopyProductionJson').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+        toast('Üretim planı JSON olarak panoya kopyalandı.');
+      } catch (e) {
+        toast('Panoya kopyalama kullanılamadı. Güvenli HTTPS bağlantısı gerekebilir.', 'err');
+      }
+    });
     target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (error) {
     toast(error.message, 'err');
