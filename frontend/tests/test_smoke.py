@@ -35,7 +35,8 @@ ROUTES = [
     "overview", "find", "viral", "channels", "categories", "keywords", "tags",
     "tracker", "alerts", "ideas", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
     "niches", "enter", "own", "data", "help", "mcp", "plan", "admin", "profile",
-    "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f", "brief/avid000",
+    "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f",
+    "channel-compare/UC0000000000000000000a,UC0000000000000000000f", "brief/avid000",
     "brief/avid000?gap=how%20to%20start%20a%20tiny%20AI%20lab%3F",
     "compare/avid000,avid001",
 ]
@@ -780,6 +781,8 @@ def test_language_switch_rerenders_without_reload(browser, base_url):
     # Тренд ниши (план 08): блок на экране ниши и колонка в списке ниш.
     ("niche/demo", ["Тренд ниши", "Видео за 30 дней"]),
     ("niches", ["Тренд"]),
+    ("channel-compare/UC0000000000000000000a,UC0000000000000000000f",
+     ["Сравнение каналов конкурентов", "Медиана просмотров на видео"]),
     # Что общего у выстреливших (план 29): блок на экране ниши, на демо-данных -- «мало данных».
     ("niche/demo", ["Что общего у выстреливших", "Корреляция, не причина"]),
     # Другой язык (план 26): на демо-данных -- либо выбор пары, либо подсказка собрать второй язык.
