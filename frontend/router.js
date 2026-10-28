@@ -88,8 +88,15 @@ const ROUTES = {
 const routeTitle = (name) => t(name);
 
 function setActive(href) {
-  document.querySelectorAll('.nav-item').forEach((a) =>
-    a.classList.toggle('active', href != null && a.getAttribute('href') === href));
+  document.querySelectorAll('#nav .nav-item').forEach((a) => {
+    const selected = href != null && a.getAttribute('href') === href;
+    a.classList.toggle('active', selected);
+    if (selected) {
+      a.setAttribute('aria-current', 'page');
+      const group = a.closest('details.nav-group');
+      if (group) group.open = true;
+    } else a.removeAttribute('aria-current');
+  });
 }
 
 async function render() {
