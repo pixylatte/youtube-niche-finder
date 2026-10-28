@@ -584,3 +584,34 @@ def test_notification_settings_routes(stub):
     from application import notify_settings as ns
     stub("NS", "save", raises=ns.SettingsError("mode must be one of"))
     assert client.put("/api/settings/notifications", json={"mode": "x"}).status_code == 400
+
+def test_discovery_activity_reads_only_local_scheduler_metadata(monkeypatch):
+    """No YouTube call, no DB write, and no assertion of worker liveness."""
+    class Conn:
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    conn = Conn()
+    meta = {
+        "worker_last_daily": "2026-10-28T07:00:00+00:00",
+        "worker_last_topic_search": None,
+    }
+    monkeypatch.setattr(api.db, "get_conn", lambda: conn)
+    monkeypatch.setattr(api.db, "get_meta", lambda c, key: meta.get(key))
+    monkeypatch.setattr(api.collector, "search_calls_today", lambda c: 2)
+    monkeypatch.setattr(api.collector, "units_today", lambda c: 8)
+    monkeypatch.setattr(api.yt, "SEARCH_DAILY_CALL_LIMIT", 100)
+    monkeypatch.setattr(api.yt, "DAILY_UNIT_LIMIT", 3000)
+
+    result = api.discovery_activity()
+    assert conn.closed
+    assert result["searchQuota"] == {
+        "callsToday": 2, "dailyLimit": 100, "callsLeft": 98}
+    assert result["unitQuota"] == {
+        "unitsToday": 8, "dailyLimit": 3000, "unitsLeft": 2992}
+    assert result["dailySchedulerMarker"]["at"] is not None
+    assert result["topicSchedulerMarker"]["state"] == "missing"
+    assert result["discoverySuccessVerified"] is False
+
