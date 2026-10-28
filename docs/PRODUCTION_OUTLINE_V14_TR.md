@@ -21,7 +21,11 @@ planlaması için düzenlenebilir örnek aralıklardır.
 5. **Seslendirme ve sahne üretim taslağını oluştur** düğmesine bas.
 6. Sonuçta seslendirme adımları, Remotion görsel türleri, sahne aralıkları,
    belge/lisans doğrulama listesi ve eksik editoryal araştırmalar gösterilir.
-7. Kullanıcı form alanlarını değiştirirse önceki sonuç/taslak temizlenir;
+7. **Remotion/Codex için plan JSON'unu kopyala** düğmesi, kullanıcı açıkça
+   tıkladığında mevcut yapılandırılmış sahne planını panoya kopyalar. Tarayıcı
+   güvenli bağlam/clipboard izni gerektirir; bağlantı ve çalışma ortamına göre
+   bu izin bulunmayabilir. Dosya, animasyon veya ses üretmez.
+8. Kullanıcı form alanlarını değiştirirse önceki sonuç/taslak temizlenir;
    böylece eski doğrulama beyanıyla yeni fikir birbirine karışmaz.
 
 ## İki ayrı format
