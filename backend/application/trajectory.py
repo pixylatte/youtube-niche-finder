@@ -9,8 +9,8 @@ publishing has no start of its curve; observedFromHours says from when.
 import infrastructure.postgres as db
 from application import discovery as trends
 from domain import metrics as M
-from domain import post_publish_observations as PPO
 from domain import periods as P
+from domain import post_publish_observations as PPO
 
 MAX_VIDEOS = 5
 EXPECTED_AGES_DAYS = (0.25, 0.5, 1, 2, 3, 5, 7, 10, 14, 21, 30)
