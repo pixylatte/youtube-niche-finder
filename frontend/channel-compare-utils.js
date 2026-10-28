@@ -1,6 +1,7 @@
 /* Shareable, quota-free comparison selection. Only YouTube channel IDs.
    No URL state is persisted in localStorage and no collected data is copied. */
-const CHANNEL_ID = /^UC[A-Za-z0-9_-]{22}$/;
+// Canonical YouTube IDs are 24 chars; seeded local demo IDs can be 22.
+const CHANNEL_ID = /^UC[A-Za-z0-9_-]{20,22}$/;
 const MAX_CHANNELS = 3;
 
 function normalizeChannelIds(raw) {
