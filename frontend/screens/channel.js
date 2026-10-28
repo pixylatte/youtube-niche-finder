@@ -3,6 +3,7 @@ import { $, api, q, num, compact, mult, ago, esc, toast, tile, sectionHead, noti
 import { view, nicheOverviewBlock } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
 import { channelEvidence } from '../channel-evidence.js';
+import { channelCompareHref } from '../channel-compare-utils.js';
 import ru from '../i18n/ru/channel.js';
 import en from '../i18n/en/channel.js';
 import tr from '../i18n/tr/channel.js';
@@ -157,6 +158,10 @@ async function viewChannel(id) {
             { label: t('colSubs'), num: true, render: (r) => compact(r.subscriberCount) },
             { label: t('colSimilarity'), num: true, render: (r) => r.similarity.toFixed(2) },
             { label: t('colVideosEmbedded'), num: true, render: (r) => num(r.videosEmbedded) },
+            { label: t('colSideBySide'), render: (r) => {
+              const href = channelCompareHref([id, r.channelId]);
+              return href ? `<a class="btn btn-ghost btn-sm" href="${esc(href)}">${esc(t('compareAgainst'))}</a>` : '—';
+            } },
           ], sim.similar)
         : empty(sim.hint || t('similarEmpty'))}
     </div>
