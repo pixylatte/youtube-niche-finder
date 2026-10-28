@@ -609,3 +609,151 @@ select, input[type="text"], input[type="number"], input[type="email"], input[typ
 @media (prefers-reduced-motion: reduce) {
   .nav-item { transition: none; }
 }
+
+
+/* YouTube Brain v2 | navigation groups + legibility.
+   Pure presentation: data fetching, endpoints, permissions and Docker unchanged. */
+.layout { grid-template-columns: 278px minmax(0, 1fr); }
+.nav {
+  display: block;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 5px;
+  scrollbar-gutter: stable;
+}
+.nav-overview { margin: 0 0 13px; }
+.nav-group {
+  display: block;
+  margin: 4px 0 11px;
+  padding: 0 0 5px;
+  border-bottom: 1px solid var(--border);
+}
+.nav-group:last-child { border-bottom: 0; }
+.nav-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  list-style: none;
+  user-select: none;
+}
+.nav-group-title::-webkit-details-marker { display: none; }
+.nav-group-title::after {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-right: 1.7px solid currentColor;
+  border-bottom: 1.7px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform .18s ease;
+}
+.nav-group[open] .nav-group-title::after { transform: rotate(45deg); }
+.nav-group-title:hover { color: var(--ink); background: rgba(121, 166, 228, .08); }
+.nav-group-title:focus-visible { outline: 2px solid var(--series-1); outline-offset: -2px; }
+.nav-group-items { display: grid; gap: 3px; padding: 1px 0 5px; }
+.nav-group:not([open]) .nav-group-items { display: none; }
+.nav-item {
+  font-size: 13.5px;
+  line-height: 1.35;
+  min-height: 39px;
+}
+.nav-item .nav-label { min-width: 0; }
+.nav-item.active { font-weight: 720; }
+.sidebar-foot { gap: 9px; padding: 12px 8px 1px; }
+.sidebar-lang {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 620;
+}
+.sidebar-lang select {
+  width: 100%;
+  min-height: 37px;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 7px 11px;
+}
+.foot-stat { font-size: 12px; line-height: 1.6; }
+.view { padding: 22px 26px 64px; gap: 16px; }
+.brain-hero {
+  gap: 14px;
+  padding: 23px 28px;
+  border-radius: 17px;
+}
+.brain-hero-eyebrow { font-size: 10.5px; letter-spacing: .12em; margin-bottom: 7px; }
+.brain-hero h1 { font-size: clamp(22px, 2.05vw, 30px); max-width: 620px; }
+.brain-hero p { font-size: 13.5px; margin-top: 8px; line-height: 1.55; }
+.brain-hero-links a { font-size: 12.5px; padding: 9px 13px; }
+.card { padding: 19px; }
+.section-title { font-size: 18px; }
+.section-sub { font-size: 13px; line-height: 1.55; }
+.field-label { font-size: 12px; }
+.tile { padding: 17px 18px; }
+.tile-label { font-size: 12px; }
+.tile-note { font-size: 12.5px; line-height: 1.5; }
+.row-title, .barrow-name { font-size: 14px; }
+.row-sub, .comment-meta { font-size: 12.5px; line-height: 1.5; }
+.metric-label { font-size: 11px; }
+.btn, .btn-sm { font-size: 13px; }
+.prose { font-size: 14px; }
+.prose .lead { font-size: 14.5px; }
+.prose h3 { font-size: 16px; }
+.prose h4 { font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .sidebar {
+    position: static;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 8px;
+  }
+  .brand { padding: 1px 4px 10px; }
+  .nav {
+    width: 100%;
+    max-width: none;
+    display: block;
+    overflow: visible;
+    padding-right: 0;
+    scrollbar-gutter: auto;
+  }
+  .nav-group { margin: 2px 0 7px; }
+  .nav-group-items { display: grid; }
+  .nav-item { white-space: normal; }
+  .sidebar-foot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    margin: 8px 0 0;
+    width: 100%;
+  }
+  .sidebar-foot .foot-stat, .sidebar-foot #signOut { grid-column: 1 / -1; }
+  .sidebar-lang { min-width: 0; }
+  .topbar { min-height: auto; }
+  .view { padding: 18px 16px 44px; gap: 14px; }
+}
+@media (max-width: 600px) {
+  .brain-hero { padding: 21px; }
+  .brain-hero h1 { font-size: 23px; }
+  .brain-hero-links { width: 100%; }
+  .brain-hero-links a { flex: 1; text-align: center; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .topbar-right { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-group-title::after { transition: none; }
+}
