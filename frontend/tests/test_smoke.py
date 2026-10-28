@@ -848,3 +848,55 @@ def test_token_section_shows_only_with_sign_in(browser, base_url):
     finally:
         page.context.close()
     assert "Личные токены" in text and "ext" in text
+
+
+def test_brain_next_competitor_format_repeatability_uses_local_gets_only(browser, base_url):
+    """The user explicitly requests local repeatability; no Youtube/LLM POST is made."""
+    import json
+
+    ids = ["UC0000000000000000000a", "UC0000000000000000000f"]
+    channels = []
+    for i, ident in enumerate(ids):
+        channels.append({
+            "found": True,
+            "profile": {"title": "Archive Rival " + str(i), "subscribers": 1200,
+                        "videoCount": 35},
+            "performance": {"videosAnalysed": 12},
+            "cadence": {"uploadsInPeriod": 2},
+            "topOutliers": [{"videoId": "abcdefghij" + str(i),
+                             "title": "Historical long documentary",
+                             "outlierScore": 3.5}],
+        })
+    page = _new_page(browser, "tr")
+    requests = []
+
+    def respond_channel(route):
+        url = route.request.url
+        index = 1 if ids[1] in url else 0
+        requests.append(("channel", route.request.method))
+        route.fulfill(status=200, content_type="application/json",
+                      body=json.dumps(channels[index]))
+
+    def respond_repeatability(route):
+        requests.append(("repeatability", route.request.method))
+        route.fulfill(status=200, content_type="application/json", body=json.dumps({
+            "verdict": "repeatable", "similarVideos": 7, "channels": 4,
+            "channelsHit": 3, "hitScore": 0.62, "examples": [],
+        }))
+
+    page.route("**/api/channels/UC*", respond_channel)
+    page.route("**/api/videos/*/repeatability", respond_repeatability)
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/channel-compare/{','.join(ids)}")
+        page.wait_for_selector("#compareFormatsReview")
+        assert [x for x in requests if x[0] == "repeatability"] == []
+        page.locator("#compareFormatsReview").click()
+        page.get_by_text("Başka kanallarda tekrarlandı", exact=True).first.wait_for()
+        assert len([x for x in requests if x[0] == "repeatability"]) == 2
+        assert all(method == "GET" for _, method in requests)
+        assert "7 ölçülebilir benzer video" in page.locator("#compareFormatsResult").inner_text()
+        assert not errors, errors
+    finally:
+        page.context.close()
