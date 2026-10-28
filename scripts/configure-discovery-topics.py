@@ -26,6 +26,8 @@ MAX_TOPICS = 6
 def normalize_topics(values):
     topics = []
     for raw in values:
+        if any(ord(ch) < 32 or ord(ch) == 127 for ch in str(raw)):
+            raise ValueError("Control characters are not allowed in topics")
         value = " ".join(str(raw).split())
         if not 3 <= len(value) <= 80:
             raise ValueError("Each topic must be 3–80 characters")
