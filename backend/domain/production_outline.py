@@ -66,7 +66,7 @@ def build(payload):
     review = ER.evaluate(payload)
     profile = review["profile"]
     template = WORKFLOWS[profile]
-    angle = payload["angle"].strip()
+    angle = payload.get("angle", "").strip()
     # The user's own text is marked as an unverified working angle. Reuse is
     # limited to the 1,200 characters already checked by ER.evaluate.
     scenes = [
