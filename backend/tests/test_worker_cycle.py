@@ -274,3 +274,76 @@ def test_a_failing_step_never_logs_a_secret(capsys):
     worker._safe("probe", boom)
     out = capsys.readouterr().out
     assert "probe: FAILED" in out and fake_key not in out
+
+
+def test_successful_query_cycle_persists_counts_without_raw_search_text(calls, monkeypatch):
+    import json
+
+    phrase = "unusual-private-query-not-to-persist"
+
+    def collect(api_key, query, **kwargs):
+        return {"videos_found": 7, "videos_stored": 6, "channels_stored": 3}
+
+    monkeypatch.setattr(worker, "QUERIES", [phrase])
+    monkeypatch.setattr(collector, "collect_niche", collect)
+    worker.cycle()
+    raw = worker._get_meta("worker_discovery_last_run")
+    payload = json.loads(raw)
+    assert payload["configuredTopics"] == 1
+    assert payload["successful"] == 1
+    assert payload["videosFound"] == 7
+    assert payload["videosProcessed"] == 6
+    assert payload["channelProfilesReported"] == 3
+    assert phrase not in raw
+    assert "api_key" not in raw
+
+
+def test_failed_query_is_not_mistaken_for_successful_collection(calls, monkeypatch):
+    import json
+
+    def fail(api_key, query, **kwargs):
+        raise RuntimeError("simulated failure")
+
+    monkeypatch.setattr(worker, "QUERIES", ["q1"])
+    monkeypatch.setattr(collector, "collect_niche", fail)
+    worker.cycle()
+    payload = json.loads(worker._get_meta("worker_discovery_last_run"))
+    assert payload["failed"] == 1
+    assert payload["successful"] == 0
+    assert payload["videosFound"] == 0
+
+
+def test_quota_failure_skips_remaining_queries_and_records_status(calls, monkeypatch):
+    import json
+
+    def exhausted(api_key, query, **kwargs):
+        raise yt.QuotaExceeded("quota exhausted")
+
+    monkeypatch.setattr(worker, "QUERIES", ["q1", "q2", "q3"])
+    monkeypatch.setattr(collector, "collect_niche", exhausted)
+    worker.cycle()
+    payload = json.loads(worker._get_meta("worker_discovery_last_run"))
+    assert payload["configuredTopics"] == 3
+    assert payload["attempted"] == 1
+    assert payload["quotaBlocked"] == 1
+    assert payload["skipped"] == 2
+    assert payload["successful"] == 0
+
+
+def test_unconfigured_worker_queries_does_not_fake_success(calls, monkeypatch):
+    import json
+
+    monkeypatch.setattr(worker, "QUERIES", [])
+    worker.cycle()
+    payload = json.loads(worker._get_meta("worker_discovery_last_run"))
+    assert payload["configuredTopics"] == 0
+    assert payload["attempted"] == 0
+    assert payload["successful"] == 0
+
+
+def test_captured_step_outcome_does_not_change_return_contract():
+    capture = {}
+    result = worker._safe("captured", lambda: {"videos_found": 2}, capture=capture)
+    assert result == {"videos_found": 2}
+    assert capture["outcome"] == "ok"
+    assert capture["result"]["videos_found"] == 2
