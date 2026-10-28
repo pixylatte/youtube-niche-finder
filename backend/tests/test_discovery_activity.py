@@ -1,7 +1,13 @@
 """Zero-quota, no-Docker tests for scheduler evidence display."""
 from datetime import datetime, timedelta, timezone
 
-from application.discovery_activity import build_run, parse_run, summarize
+from application.discovery_activity import (
+    build_run,
+    build_topic_result,
+    parse_run,
+    parse_topic_result,
+    summarize,
+)
 
 
 NOW = datetime(2026, 10, 28, 9, 30, tzinfo=timezone.utc)
@@ -87,7 +93,7 @@ def test_latest_batch_is_sanitized_and_integrated_into_read_only_summary():
     assert payload["discoveryRun"]["successful"] == 1
     assert payload["workerRunningVerified"] is False
     assert payload["discoverySuccessVerified"] is False
-    assert payload["evidenceLevel"] == "schedule-and-query-outcomes"
+    assert payload["evidenceLevel"] == "recorded-collector-outcomes"
     assert "query" not in json.dumps(payload).lower()
 
 
@@ -134,3 +140,46 @@ def test_old_run_is_stale_even_if_it_was_successful():
     data = summarize(run_record=raw, now=NOW)["discoveryRun"]
     assert data["recorded"]["state"] == "stale"
     assert data["successful"] == 1
+
+
+def test_topic_watch_summary_counts_real_return_without_owner_ids():
+    import json
+
+    raw = build_topic_result("ok", {
+        "topicsSearched": 3, "videosStored": 12, "searchCalls": 3,
+        "stoppedBy": "search-quota", "skippedUsers": [1, 2],
+    }, now=NOW)
+    encoded = json.dumps(raw)
+    assert '"skippedUsers"' not in encoded
+    assert '"user_id"' not in encoded
+    parsed = parse_topic_result(encoded, now=NOW)
+    assert parsed["topicsSearched"] == 3
+    assert parsed["videosStored"] == 12
+    assert parsed["searchCalls"] == 3
+    assert parsed["skippedOwnerCount"] == 2
+    assert parsed["stoppedBy"] == "search-quota"
+
+
+def test_topic_watch_failures_and_skips_do_not_fake_stored_videos():
+    import json
+
+    for state in ("failed", "quota", "skipped", "invalid_result"):
+        encoded = json.dumps(build_topic_result(state, now=NOW))
+        result = summarize(topic_run_record=encoded, now=NOW)
+        assert result["topicSearchRun"]["state"] == state
+        assert result["topicSearchRun"]["videosStored"] == 0
+        assert result["topicSearchRun"]["topicsSearched"] == 0
+        assert result["evidenceLevel"] == "recorded-collector-outcomes"
+
+
+def test_corrupted_topic_records_fail_closed():
+    import json
+
+    assert parse_topic_result('{"state":"ok","token":"private"}', now=NOW) is None
+    invalid = build_topic_result("ok", {"topicsSearched": 0, "videosStored": 0,
+                                       "searchCalls": 0, "stoppedBy": None}, now=NOW)
+    invalid["videosStored"] = -1
+    assert parse_topic_result(json.dumps(invalid), now=NOW) is None
+    invalid["videosStored"] = 0
+    invalid["at"] = {"unexpected": True}
+    assert parse_topic_result(json.dumps(invalid), now=NOW) is None
