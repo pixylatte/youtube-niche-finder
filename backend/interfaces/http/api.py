@@ -46,6 +46,7 @@ from application import content_calendar as CAL
 from application import content_gaps as CG
 from application import digest as DG
 from application import discovery as trends
+from application import discovery_activity as DA
 from application import enrichment as EN
 from application import hook_score as HK
 from application import impersonation as IMP
@@ -641,6 +642,28 @@ def health(request: Request):
         },
         "maturityCurve": curve,
     }
+
+
+@app.get("/api/discovery-activity")
+def discovery_activity():
+    """Read-only scheduler markers and separately metered YouTube API budgets.
+
+    The worker may mark a scheduled cycle after an unsuccessful operation.
+    Neither this endpoint nor quota counters prove Docker worker liveness or
+    successful discovery. Existing auth middleware protects this endpoint.
+    """
+    conn = db.get_conn()
+    try:
+        return DA.summarize(
+            daily_marker=db.get_meta(conn, "worker_last_daily"),
+            topic_marker=db.get_meta(conn, "worker_last_topic_search"),
+            calls_today=collector.search_calls_today(conn),
+            search_limit=yt.SEARCH_DAILY_CALL_LIMIT,
+            units_today=collector.units_today(conn),
+            unit_limit=yt.DAILY_UNIT_LIMIT,
+        )
+    finally:
+        conn.close()
 
 
 @app.get("/api/stats")
