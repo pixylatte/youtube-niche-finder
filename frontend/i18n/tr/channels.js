@@ -1,4 +1,9 @@
 export default {
+  compareSelected: "Seçilen kanalları karşılaştır",
+  comparePickHint: "Karşılaştırmak için 2–3 kanal seçin",
+  comparePickChannel: "{title} kanalını karşılaştırma için seç",
+  comparePicked: "{count}/{max} kanal seçildi",
+  compareMax: "En fazla {max} kanal seçebilirsiniz",
   title: 'Öne Çıkan Kanallar',
   sub: '{period} · ilk keşif tarihine göre yeni fırsatlar',
   minMultiplier: 'En düşük performans çarpanı',
