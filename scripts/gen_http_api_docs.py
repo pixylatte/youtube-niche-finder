@@ -54,6 +54,7 @@ SUMMARY = {
     "GET /api/outlier-channels": ("discover", "Recently added channels whose best video beat the channel's median by `min_multiplier`."),
     "GET /api/competition": ("discover", "Young, fast-growing channels that are about to become competitors."),
     "GET /api/search": ("discover", "Outlier search across the local corpus with subscriber, length, RPM, Shorts and YPP-threshold filters."),
+    "POST /api/editorial/readiness": ("create", "Manual source/originality/rights review completeness. No URL fetching, factual verification or publication approval."),
     "POST /api/ideas/check": ("discover", "Verdicts for a list of video ideas (free / recent / proven / flopped) against what is already collected."),
     "GET /api/best-time": ("discover", "Best weekday/hour to publish for a niche or channel, scored by median age-adjusted outlier."),
     "GET /api/title-patterns": ("discover", "Title phrases that correlate with outliers in a niche or channel (lift, examples)."),
