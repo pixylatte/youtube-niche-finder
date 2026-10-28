@@ -347,3 +347,41 @@ def test_captured_step_outcome_does_not_change_return_contract():
     assert result == {"videos_found": 2}
     assert capture["outcome"] == "ok"
     assert capture["result"]["videos_found"] == 2
+
+def test_topic_watch_scan_persists_new_video_count_separately(calls, monkeypatch):
+    import json
+
+    monkeypatch.setattr(topic_mod, "search_topics", lambda key: {
+        "topicsSearched": 2, "videosStored": 11, "searchCalls": 2,
+        "stoppedBy": None, "skippedUsers": [],
+    })
+    worker.cycle()
+    data = json.loads(worker._get_meta("worker_topic_search_last_result"))
+    assert data["state"] == "ok"
+    assert data["topicsSearched"] == 2
+    assert data["videosStored"] == 11
+    assert data["searchCalls"] == 2
+
+
+def test_topic_watch_exception_records_failure_not_success(calls, monkeypatch):
+    import json
+
+    def fail(key):
+        raise ValueError("simulation")
+
+    monkeypatch.setattr(topic_mod, "search_topics", fail)
+    worker.cycle()
+    data = json.loads(worker._get_meta("worker_topic_search_last_result"))
+    assert data["state"] == "failed"
+    assert data["videosStored"] == 0
+
+
+def test_topic_watch_skips_when_quota_already_blocked(calls, monkeypatch):
+    import json
+
+    worker._set_meta("worker_quota_blocked_until", P.pacific_date_key())
+    worker.cycle()
+    data = json.loads(worker._get_meta("worker_topic_search_last_result"))
+    assert data["state"] == "skipped"
+    assert data["searchCalls"] == 0
+
