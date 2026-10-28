@@ -82,6 +82,7 @@ function discoveryActivityCard(activity) {
       ${t('discoveryEvidenceWarning')}
     </div>
     ${discoveryRunCard(activity.discoveryRun)}
+    ${topicSearchRunCard(activity.topicSearchRun)}
   </div>`;
 }
 
@@ -108,6 +109,32 @@ function discoveryRunCard(run) {
     <div class="section-sub" style="margin-top:10px">
       ${run.configuredTopics === 0 ? t('discoveryQueriesNotConfigured') + ' ' : ''}
       ${t('discoveryOutcomeWarning')}
+    </div>
+  </div>`;
+}
+
+
+
+function topicSearchRunCard(run) {
+  if (!run) return `<div class="section-sub" style="margin-top:12px">
+    ${t('discoveryTopicRunMissing')}</div>`;
+  const time = run.recorded?.at ? esc(fmtDate(run.recorded.at)) : '—';
+  const status = {
+    ok: t('discoveryTopicRunOk'),
+    failed: t('discoveryTopicRunFailed'),
+    quota: t('discoveryTopicRunQuota'),
+    skipped: t('discoveryTopicRunSkipped'),
+    invalid_result: t('discoveryTopicRunInvalid'),
+  }[run.state] || t('discoveryTopicRunInvalid');
+  return `<div class="section-sub" style="margin-top:14px">
+    <strong>${t('discoveryTopicRunTitle')}</strong> · ${time} · ${status}
+    <div class="tiles">
+      ${tile(t('discoveryTopicsSearched'), num(run.topicsSearched))}
+      ${tile(t('discoveryTopicNewVideos'), num(run.videosStored))}
+      ${tile(t('discoveryTopicSearchCalls'), num(run.searchCalls))}
+    </div>
+    <div class="section-sub" style="margin-top:8px">
+      ${t('discoveryTopicEvidenceWarning')}
     </div>
   </div>`;
 }
