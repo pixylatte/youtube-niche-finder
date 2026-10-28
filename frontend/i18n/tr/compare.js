@@ -1,4 +1,7 @@
 export default {
+  observationUnknown: "Gözlem kayıtlarının güvenilirliği bilinmiyor.",
+  observationLimited: "İlk 24 saatte iki karşılaştırılabilir gerçek ölçüm yok; 24 saatlik hız tahmin edilmedi.",
+  observationMeasured: "Gerçek arşiv ölçümü: yayından {start}–{end} saat sonra, bu aralıkta saatte {rate} yeni izlenme. Tam 24 saatlik sonuç değildir.",
   emptyBasket:'Video kartlarındaki karşılaştır bağlantısıyla video ekleyin',
   missing:'Veritabanında yok: {ids}',
   title:'İzlenme Eğrisi Karşılaştırması',
