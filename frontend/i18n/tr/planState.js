@@ -1,1 +1,2 @@
-export default { planLine:'Plan {name} · kota {used}/{limit}' };
+export default { unlimitedPlan: 'Sınırsız',
+  planLine:'Plan {name} · kota {used}/{limit}' };

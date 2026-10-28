@@ -307,6 +307,31 @@ def test_brain_navigation_preferences_survive_reload_and_languages(browser, base
         page.context.close()
 
 
+
+@pytest.mark.parametrize("route,required", [
+    ("help", ("YouTube Brain nedir?", "Ölçümler nasıl okunur?",
+              "Sık Sorulan Sorular", "Her sayı nereden geliyor?")),
+    ("mcp", ("MCP Bağlantısı", "Veri toplama", "Bağlantı kontrolü")),
+])
+def test_turkish_help_and_mcp_panels_use_localised_labels(browser, base_url, route, required):
+    """Help and MCP documentation must be Turkish while code snippets keep their exact syntax."""
+    page = _new_page(browser, "tr")
+    problems = []
+    page.on("pageerror", lambda error: problems.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/{route}")
+        page.wait_for_function(READY_JS)
+        page.wait_for_load_state("networkidle")
+        content = page.inner_text("#view")
+        assert all(text in content for text in required), (route, content[:1000])
+        assert not problems, problems
+        if route == "mcp":
+            assert "docker compose" in content
+            assert "niche-finder" in content
+    finally:
+        page.context.close()
+
+
 def test_completed_turkish_dictionary_keys_and_placeholders(browser, base_url):
     """Fully translated namespaces keep matching keys, plurals and template fields."""
     namespaces = (
@@ -316,6 +341,7 @@ def test_completed_turkish_dictionary_keys_and_placeholders(browser, base_url):
         "metadata", "transcripts", "enter", "compare", "manualRuns",
         "planState", "impersonation", "plan", "hookView",
         "ui", "account", "profile", "own", "brief", "channel", "niche",
+        "admin", "mcp", "help",
     )
     page = _new_page(browser, "tr")
     try:

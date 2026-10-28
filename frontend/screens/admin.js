@@ -8,8 +8,9 @@ import { startView } from '../impersonation.js';
 import { dict, fmtNum, fmtDateTime } from '../i18n.js';
 import ru from '../i18n/ru/admin.js';
 import en from '../i18n/en/admin.js';
+import tr from '../i18n/tr/admin.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 function planForm(p, catalog) {
   const v = (x) => (x == null ? '' : esc(String(x)));
