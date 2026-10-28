@@ -433,7 +433,8 @@ async function viewNiche(slug) {
     api(`/api/niches/${encodeURIComponent(slug)}/content-gaps`).catch(() => null),
     api(`/api/niches/${encodeURIComponent(slug)}/thumbnail-styles`).catch(() => null),
   ]);
-  if (!d.found) { view.innerHTML = notice(esc(d.hint || t('nicheNotFound'))); return; }
+  if (!d.found) { view.innerHTML = notice(esc(d.hint || t('nicheNotFound')))
+    + archiveEvidenceBlock(d.evidenceQuality); return; }
 
   const tagsByVideo = {};
   for (const tg of (videoTags.tags || [])) {
