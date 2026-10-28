@@ -12,13 +12,13 @@ from collections import Counter
 PROFILES = {
     "kayip": {
         "name": "Kayıp Sayfalar",
-        "prefix": "kayıp-sayfalar",
+        "prefixes": ("kayıp-sayfalar",),
         "only_shorts": False,
         "verification": "historical-primary-sources-required",
     },
     "islam": {
         "name": "1 Dakika İslam",
-        "prefix": "1-dakika-islam",
+        "prefixes": ("1-dakika-i-slam", "1-dakika-islam"),
         "only_shorts": True,
         "verification": "quran-hadith-and-scholarly-verification-required",
     },
@@ -42,12 +42,12 @@ def select_niches(all_niches, profile):
     """Match deliberately labeled editorial niches; never guess from a title."""
     if profile not in PROFILES:
         raise ValueError("unknown profile")
-    prefix = PROFILES[profile]["prefix"]
+    prefixes = PROFILES[profile]["prefixes"]
     out = []
     for row in all_niches:
         slug = row.get("slug")
-        if (isinstance(slug, str)
-                and (slug.casefold() == prefix or slug.casefold().startswith(prefix + "-"))):
+        name = slug.casefold() if isinstance(slug, str) else ""
+        if any(name == prefix or name.startswith(prefix + "-") for prefix in prefixes):
             out.append({"slug": slug, "label": str(row.get("label") or slug),
                         "archiveVideos": int(row.get("video_count") or 0)})
     return sorted(out, key=lambda n: (-n["archiveVideos"], n["slug"]))[:MAX_NICHES]
