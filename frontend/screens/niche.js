@@ -447,7 +447,7 @@ async function viewNiche(slug) {
       <a class="btn btn-ghost btn-sm" href="/api/niche/${encodeURIComponent(slug)}/export.tsv">${t('exportTsv')}</a>
       <a class="btn btn-ghost btn-sm" href="/api/niche/${encodeURIComponent(slug)}/export.csv">${t('exportCsv')}</a>`))
     + archiveEvidenceBlock(d.evidenceQuality)
-+ nicheTemplateRiskBlock(risk)
+    + nicheTemplateRiskBlock(risk)
     + '<div id="nichePolicy"></div>'
     + '<div id="nicheTraits"></div>'
     + '<div id="nicheProfit"></div>'
