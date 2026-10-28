@@ -1,4 +1,9 @@
 export default {
+  compareSelected: "Compare selected channels",
+  comparePickHint: "Select 2–3 channels for comparison",
+  comparePickChannel: "Select {title} for comparison",
+  comparePicked: "{count}/{max} channels selected",
+  compareMax: "You can select up to {max} channels",
   title: 'Outlier channels',
   sub: '{period} · by first seen — fresh opportunities',
   minMultiplier: 'Multiplier at least',

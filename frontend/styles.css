@@ -903,3 +903,55 @@ select, input[type="text"], input[type="number"], input[type="email"], input[typ
 @media (max-width: 550px) {
   .channel-evidence-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Channel comparison — existing local data only; no confidence badges. */
+.channel-compare-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+.channel-compare-select-row {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+}
+.channel-compare-select {
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.channel-compare-select input {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: var(--series-1);
+}
+.channel-compare-result { flex: 1; min-width: 0; }
+.channel-compare-result > .row { border-bottom: none; }
+.channel-compare-table { overflow-x: auto; }
+.channel-compare-table table { min-width: 610px; }
+.channel-compare-table th:first-child {
+  text-align: left;
+  min-width: 210px;
+  width: 30%;
+  white-space: normal;
+}
+.channel-compare-table th:not(:first-child),
+.channel-compare-table td {
+  min-width: 170px;
+  max-width: 310px;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.channel-compare-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.channel-compare-note { padding-top: 12px; line-height: 1.6; }
+@media (max-width: 600px) {
+  .channel-compare-toolbar { align-items: stretch; }
+  .channel-compare-toolbar .btn { flex: 1; }
+  .channel-compare-select { min-width: 38px; }
+}

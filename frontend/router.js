@@ -25,6 +25,7 @@ import { viewNiche } from './screens/niche.js';
 import { viewChannel } from './screens/channel.js';
 import { viewBrief } from './screens/brief.js';
 import { viewCompare } from './screens/compare.js';
+import { viewChannelCompare } from './screens/channel-compare.js';
 import { viewData } from './screens/data.js';
 import { viewHelp } from './screens/help.js';
 import { viewMcp } from './screens/mcp.js';
@@ -118,6 +119,10 @@ async function render() {
   if (name === 'compare') {
     $('#crumbSection').textContent = t('crumbCompare'); setActive(null);
     return guard(() => viewCompare(arg || ''));
+  }
+  if (name === 'channel-compare') {
+    $('#crumbSection').textContent = t('crumbChannelCompare'); setActive('#/channels');
+    return guard(() => viewChannelCompare(arg || ''));
   }
   if (name === 'niche' && arg) {
     $('#crumbSection').textContent = t('crumbNiche'); setActive('#/niches');

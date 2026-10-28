@@ -26,6 +26,7 @@ export default {
   plan: 'Plan',
   admin: 'Admin',
   profile: 'Profile',
+  crumbChannelCompare: "Compare channels",
   crumbChannel: 'Channel',
   crumbBrief: 'Brief',
   crumbCompare: 'Compare',

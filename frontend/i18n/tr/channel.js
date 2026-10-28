@@ -1,4 +1,6 @@
 export default {
+  colSideBySide: "Karşılaştır",
+  compareAgainst: "Yan yana karşılaştır",
   evidenceTitle: "Rakip Kanal Veri Özeti",
   evidenceSub: "Bu kanal için arşivde gerçekten görülebilen veriler — başarı olasılığı veya güven puanı değildir.",
   evidenceOpenData: "Veri Merkezi",

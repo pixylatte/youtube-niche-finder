@@ -1,4 +1,6 @@
 export default {
+  colSideBySide: "Compare",
+  compareAgainst: "Side-by-side",
   evidenceTitle: "Competitor data coverage",
   evidenceSub: "What is actually observable for this channel in the local archive — not a success probability.",
   evidenceOpenData: "Data Center",

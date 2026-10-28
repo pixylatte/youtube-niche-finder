@@ -26,6 +26,7 @@ export default {
   plan: 'Тариф',
   admin: 'Админка',
   profile: 'Профиль',
+  crumbChannelCompare: "Сравнение каналов",
   crumbChannel: 'Канал',
   crumbBrief: 'Бриф',
   crumbCompare: 'Сравнение',

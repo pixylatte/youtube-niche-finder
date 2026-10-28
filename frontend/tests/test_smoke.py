@@ -35,7 +35,8 @@ ROUTES = [
     "overview", "find", "viral", "channels", "categories", "keywords", "tags",
     "tracker", "alerts", "ideas", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
     "niches", "enter", "own", "data", "help", "mcp", "plan", "admin", "profile",
-    "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f", "brief/avid000",
+    "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f",
+    "channel-compare/UC0000000000000000000a,UC0000000000000000000f", "brief/avid000",
     "brief/avid000?gap=how%20to%20start%20a%20tiny%20AI%20lab%3F",
     "compare/avid000,avid001",
 ]
@@ -258,6 +259,125 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
 
 
 
+
+
+
+
+def test_brain_channel_compare_link_normalizes_ids_without_storage(browser, base_url):
+    """Only 2-3 safe, unique channel IDs in a shareable URL; no stored basket."""
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        result = page.evaluate("""async () => {
+            const { normalizeChannelIds, channelCompareHref } =
+              await import('/channel-compare-utils.js');
+            const a = 'UC0000000000000000000a';
+            const f = 'UC0000000000000000000f';
+            const b = 'UC0000000000000000000b';
+            const normal = 'UC' + 'a'.repeat(22);
+            return {
+                demoIds: normalizeChannelIds([a, a, f, b, normal]),
+                fullLength: normalizeChannelIds([normal]).length,
+                malformed: normalizeChannelIds([a, '%E0%A4%A', 'UCbad', '<script>']),
+                href: channelCompareHref([a, f]),
+                single: channelCompareHref([a]),
+                basket: localStorage.getItem('nf.channel-compare'),
+            };
+        }""")
+        assert result["demoIds"] == [
+            "UC0000000000000000000a", "UC0000000000000000000f",
+            "UC0000000000000000000b"]
+        assert result["fullLength"] == 1
+        assert result["malformed"] == ["UC0000000000000000000a"]
+        assert result["href"] == (
+            "#/channel-compare/UC0000000000000000000a,UC0000000000000000000f")
+        assert result["single"] is None
+        assert result["basket"] is None
+    finally:
+        page.context.close()
+
+
+def test_brain_channel_compare_table_displays_existing_data_and_missing(browser, base_url):
+    """Two read-only GETs; missing 30d growth is a dash, not a fabricated zero."""
+    import json
+
+    a = "UC0000000000000000000a"
+    f = "UC0000000000000000000f"
+    sample = {
+        "found": True,
+        "profile": {"title": "Archive Alpha", "subscribers": 1800,
+                    "videoCount": 100},
+        "performance": {"videosAnalysed": 20, "medianViewsPerVideo": 4200,
+                        "medianViewsPerSubscriber": 2.3, "viralSkew": 1.7},
+        "cadence": {"uploadsInPeriod": 4, "uploadsPerWeekLifetime": 1.5,
+                    "shortsSharePercent": 25.0},
+        "growth": {"30d": {"subscribers": None, "views": None}},
+        "snapshots": 1,
+        "topOutliers": [{"outlierScore": 3.4}],
+    }
+    page = _new_page(browser, "tr")
+    requests = []
+
+    def respond(route):
+        requests.append(route.request.url)
+        channel_id = route.request.url.split("/api/channels/")[1].split("?")[0]
+        if channel_id == f:
+            route.fulfill(status=404, content_type="application/json",
+                          body='{"detail":"channel missing locally"}')
+        else:
+            route.fulfill(status=200, content_type="application/json",
+                          body=json.dumps(sample))
+
+    page.route("**/api/channels/*", respond)
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/channel-compare/{a},{f}")
+        page.wait_for_selector(".channel-compare-table", timeout=30000)
+        txt = page.inner_text("#view")
+        assert "Rakip Kanalları Karşılaştır" in txt
+        assert "Archive Alpha" in txt
+        assert "Arşivde incelenen video" in txt
+        assert "30 günlük ölçülebilen abone artışı / gün" in txt
+        assert f in txt  # missing channel notice retains the requested ID
+        assert "yerel arşivde bulunamadı" in txt
+        assert page.locator(".channel-compare-table tbody tr").count() == 13
+        assert len(requests) == 2 and all("/api/channels/" in url for url in requests)
+        assert all("period=" in url for url in requests)
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_brain_channel_compare_selection_needs_two_channels(browser, base_url):
+    """No POST or discovery: selection only changes the hash URL."""
+    import json
+
+    ids = ["UC0000000000000000000a", "UC0000000000000000000f"]
+    channels = [{"channelId": cid, "channelTitle": "Sample " + str(i),
+                 "subscribers": 200 + i, "multiplier": 3.5, "strength": 2,
+                 "videosInWindow": 4} for i, cid in enumerate(ids)]
+    page = _new_page(browser, "tr")
+    page.route("**/api/outlier-channels*", lambda route: route.fulfill(
+        status=200, content_type="application/json", body=json.dumps({
+            "channels": channels, "hint": None})))
+    try:
+        page.goto(f"{base_url}/#/channels")
+        page.wait_for_selector(".js-compare-channel", timeout=30000)
+        btn = page.locator("#compareChannelsBtn")
+        assert btn.is_disabled()
+        picks = page.locator(".js-compare-channel")
+        assert picks.count() == 2
+        picks.nth(0).check()
+        assert btn.is_disabled()
+        picks.nth(1).check()
+        assert btn.is_enabled()
+        btn.click()
+        page.wait_for_function("""() => location.hash.startsWith('#/channel-compare/')""")
+        assert page.evaluate("location.hash") == "#/channel-compare/" + ",".join(ids)
+    finally:
+        page.context.close()
 
 
 def test_brain_competitor_evidence_panel_is_displayed_without_extra_quota(browser, base_url):
@@ -661,6 +781,8 @@ def test_language_switch_rerenders_without_reload(browser, base_url):
     # Тренд ниши (план 08): блок на экране ниши и колонка в списке ниш.
     ("niche/demo", ["Тренд ниши", "Видео за 30 дней"]),
     ("niches", ["Тренд"]),
+    ("channel-compare/UC0000000000000000000a,UC0000000000000000000f",
+     ["Сравнение каналов конкурентов", "Медиана просмотров на видео"]),
     # Что общего у выстреливших (план 29): блок на экране ниши, на демо-данных -- «мало данных».
     ("niche/demo", ["Что общего у выстреливших", "Корреляция, не причина"]),
     # Другой язык (план 26): на демо-данных -- либо выбор пары, либо подсказка собрать второй язык.
