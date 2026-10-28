@@ -631,7 +631,15 @@ def test_discovery_activity_endpoint_includes_last_worker_query_outcomes(monkeyp
     run = build_run(
         [{"status": "ok", "videos_found": 8, "videos_stored": 7,
           "channels_stored": 4}], 1, now=datetime.now(timezone.utc))
-    data = {"worker_discovery_last_run": json.dumps(run)}
+    from application.discovery_activity import build_topic_result
+    topic = build_topic_result("ok", {
+        "topicsSearched": 2, "videosStored": 4,
+        "searchCalls": 2, "stoppedBy": None, "skippedUsers": [],
+    }, now=datetime.now(timezone.utc))
+    data = {
+        "worker_discovery_last_run": json.dumps(run),
+        "worker_topic_search_last_result": json.dumps(topic),
+    }
     monkeypatch.setattr(api.db, "get_conn", lambda: conn)
     monkeypatch.setattr(api.db, "get_meta", lambda c, key: data.get(key))
     monkeypatch.setattr(api.collector, "search_calls_today", lambda c: 2)
@@ -640,6 +648,7 @@ def test_discovery_activity_endpoint_includes_last_worker_query_outcomes(monkeyp
     assert conn.closed
     assert result["discoveryRun"]["videosFound"] == 8
     assert result["discoveryRun"]["successful"] == 1
+    assert result["topicSearchRun"]["videosStored"] == 4
     assert result["workerRunningVerified"] is False
     assert result["discoverySuccessVerified"] is False
 
