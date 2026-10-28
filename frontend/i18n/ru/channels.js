@@ -1,4 +1,9 @@
 export default {
+  compareSelected: "Сравнить выбранные каналы",
+  comparePickHint: "Выберите 2–3 канала",
+  comparePickChannel: "Выбрать канал {title} для сравнения",
+  comparePicked: "Выбрано {count}/{max} каналов",
+  compareMax: "Можно выбрать не более {max} каналов",
   title: 'Outlier-каналы',
   sub: '{period} · по попаданию в базу — свежие возможности',
   minMultiplier: 'Множитель не меньше',

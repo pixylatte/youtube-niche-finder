@@ -1,0 +1,18 @@
+export default {
+  length:'uzunluk {len}',hasNumber:'sayı içeriyor',patterns:'kalıplar: {list}',
+  likelyDuplicate:'yayınlanmış bir videoya benziyor',
+  improved:'<b>Geliştirilmiş sürüm:</b> {title}',
+  scoreTitle:'Başlık Analizi',
+  scoreSub:'seçili nişin başlık kalıpları ve etkinse LLM ile değerlendirilir; nişi üst filtreden seçin',
+  candidatesPlaceholder:'her satıra bir başlık',score:'Puan',
+  suggestTitle:'Başlık önerileri üret',
+  suggestSub:'yapılandırılmış LLM_PROVIDER gerekir',
+  topicPlaceholder:'video konusu',generate:'Üret',
+  hookTitle:'Açılış (Hook) Analizi',
+  hookSub:'yalnız açılış metnini inceler, görüntü veya kurguyu değil; metin saklanmaz',
+  hookPlaceholder:'senaryonun ilk 20–30 saniyesini yapıştırın',
+  needTitle:'En az bir başlık girin',
+  needNiche:'Üstteki filtreden niş seçin',
+  needHook:'Açılış metnini yapıştırın',
+  needTopic:'Bir konu girin',
+};

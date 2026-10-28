@@ -10,6 +10,7 @@ import infrastructure.postgres as db
 from application import discovery as trends
 from domain import metrics as M
 from domain import periods as P
+from domain import post_publish_observations as PPO
 
 MAX_VIDEOS = 5
 EXPECTED_AGES_DAYS = (0.25, 0.5, 1, 2, 3, 5, 7, 10, 14, 21, 30)
@@ -85,5 +86,8 @@ def video_trajectory(video_ids) -> dict:
                     "channelTitle": v["channel_title"], "publishedAt": v["published_at"],
                     "views": v["view_count"], "baselineMedianViews": base,
                     "observedFromHours": points[0]["ageHours"] if points else None,
+                    "observationReadiness": PPO.assess(
+                        points, comparability_break=any(
+                            mark["kind"] == "view_count_change" for mark in marks)),
                     "points": points, "expected": expected, "marks": marks})
     return {"videos": out, "missing": [i for i in ids if i not in vids], "note": NOTE}

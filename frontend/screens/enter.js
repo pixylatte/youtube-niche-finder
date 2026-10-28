@@ -2,10 +2,12 @@
 import { $, api, q, num, esc, toast, sectionHead, empty, notice, qmark, saturationChip } from '../ui.js';
 import { view } from '../shared.js';
 import { dict } from '../i18n.js';
+import { evidence } from '../niche-evidence.js';
 import ru from '../i18n/ru/enter.js';
 import en from '../i18n/en/enter.js';
+import tr from '../i18n/tr/enter.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ----------------------------------------------- Где заходить (план 27) */
 
@@ -51,10 +53,24 @@ function sorted(list) {
 }
 
 function scoreCell(e) {
-  if (e.score == null) {
-    return `<span class="chip" data-tip="${esc(REASON_KEY[e.reason] ? t(REASON_KEY[e.reason]) : '')}">${t('noScore')}</span>`;
+  const facts = evidence(e);
+  const weight = facts.knownWeightPct == null ? '' : `<div class="evidence-weight"
+    data-tip="${esc(t('evidenceWeightTip'))}">${esc(t('evidenceWeight', { pct: facts.knownWeightPct }))}</div>`;
+  if (!facts.hasScore) {
+    const reason = REASON_KEY[facts.missingReason] ? t(REASON_KEY[facts.missingReason]) : t('noScore');
+    return `<span class="chip" data-tip="${esc(reason)}">${esc(t('noScore'))}</span>
+      <div class="evidence-reason">${esc(reason)}</div>${weight}`;
   }
-  return `<span class="chip ${BAND_CLASS[e.band] || ''}"><b>${e.score}</b></span>`;
+  return `<span class="chip ${BAND_CLASS[e.band] || ''}"><b>${e.score}</b></span>${weight}`;
+}
+
+function evidenceLine(e) {
+  const f = evidence(e);
+  const display = (value) => value == null ? '—' : num(value);
+  return `<div class="niche-evidence-line">${esc(t('evidenceLine', {
+    videos: display(f.totalVideos), channels: display(f.distinctChannels),
+    recent: display(f.recentVideos),
+  }))}</div>`;
 }
 
 function termCell(e, def) {
@@ -73,7 +89,8 @@ function rankingTable() {
     <td><input type="checkbox" class="enter-pick" data-slug="${esc(e.niche)}"${
       selected.has(e.niche) ? ' checked' : ''}></td>
     <td class="wrap"><a href="#/niche/${esc(e.niche)}">${esc(e.label || e.niche)}</a>
-      <div class="section-sub">${esc(e.niche)} · ${t('videosCount', { n: e.videos })}</div></td>
+      <div class="section-sub">${esc(e.niche)}</div>
+      ${evidenceLine(e)}</td>
     <td class="num">${scoreCell(e)}</td>
     <td>${saturationChip({ status: e.status, confidence: e.confidence })}</td>
     ${defs.map((d) => `<td class="num">${termCell(e, d)}</td>`).join('')}
@@ -90,8 +107,13 @@ function compareTable(c) {
   const rows = [
     [t('rowScore'), (e) => scoreCell(e)],
     [t('rowTrend'), (e) => saturationChip({ status: e.status, confidence: e.confidence })],
-    [t('rowVideosInNiche'), (e) => ov(e, 'video_count')],
-    [t('rowChannels'), (e) => ov(e, 'channel_count')],
+    [t('rowVideosInNiche'), (e) => e.videos == null ? ov(e, 'video_count') : num(e.videos)],
+    [t('rowChannels'), (e) => e.channels == null ? ov(e, 'channel_count') : num(e.channels)],
+    [t('rowRecentVideos'), (e) => e.recentVideos == null ? '—' : num(e.recentVideos)],
+    [t('rowKnownWeight'), (e) => {
+      const pct = evidence(e).knownWeightPct;
+      return pct == null ? '—' : `${pct}%`;
+    }],
     [t('rowMedianSubs'), (e) => ov(e, 'median_subscribers')],
     [t('rowMedianOutlier'), (e) => ov(e, 'median_outlier_score', (v) => `${v}x`)],
     [t('rowMedianViews'), (e) => ov(e, 'median_views_per_video')],

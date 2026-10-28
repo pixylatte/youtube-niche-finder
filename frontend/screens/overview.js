@@ -2,10 +2,12 @@
 import { api, q, num, compact, esc, delta, tile, sectionHead, notice, empty, barList, channelRow, videoCard, state } from '../ui.js';
 import { view, plabel, base } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
+import { archiveCoverage } from '../coverage-insights.js';
 import ru from '../i18n/ru/overview.js';
 import en from '../i18n/en/overview.js';
+import tr from '../i18n/tr/overview.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* --------------------------------------------------------------- Обзор */
 
@@ -34,19 +36,60 @@ function digestBlock(g) {
   </section>`;
 }
 
+/* Archive coverage is global across all niches. Do not present it as a
+   confidence score, a niche-specific estimate or proof of trend strength. */
+function archiveCoverageCard(coverage, stats, periodLabel) {
+  const d = archiveCoverage(coverage, stats);
+  const val = (n) => n == null ? '—' : num(n);
+  const metric = (title, amount, pct, note) => `<div class="coverage-item">
+    <div class="coverage-item-label">${esc(title)}</div>
+    <div class="coverage-item-value"><strong>${val(amount)}</strong>${pct == null
+      ? '' : `<span class="coverage-percent">${pct}%</span>`}</div>
+    ${pct == null ? '' : `<progress max="100" value="${pct}" aria-label="${esc(title)}"></progress>`}
+    <p class="coverage-item-note">${esc(note)}</p>
+  </div>`;
+
+  const notes = [];
+  if (d.total === 0) notes.push(t('archiveEmpty'));
+  else {
+    if (d.periodSparse) notes.push(t('archivePeriodSparse', { period: periodLabel }));
+    if (d.historyMissing) notes.push(t('archiveHistoryMissing'));
+    else if (d.history != null && d.history > 0) notes.push(t('archiveHistoryCaveat'));
+    if (d.vectorsMissing) notes.push(t('archiveVectorsMissing'));
+  }
+
+  return `<section class="card coverage-card" aria-labelledby="archiveCoverageTitle">
+    <div class="section-head">
+      <div>
+        <h2 class="section-title" id="archiveCoverageTitle">${esc(t('archiveTitle'))}</h2>
+        <div class="section-sub">${esc(t('archiveScope'))}</div>
+      </div>
+      <div class="section-actions"><a class="btn btn-ghost btn-sm" href="#/data">${esc(t('archiveDataLink'))}</a></div>
+    </div>
+    <div class="coverage-grid">
+      ${metric(t('archivePeriodLabel', { period: periodLabel }), d.period, d.periodPct,
+        t('archivePeriodNote'))}
+      ${metric(t('archiveHistoryLabel'), d.history, d.historyPct, t('archiveHistoryNote'))}
+      ${metric(t('archiveCategoryLabel'), d.categories, d.categoriesPct, t('archiveCategoryNote'))}
+      ${metric(t('archiveVectorsLabel'), d.vectors, d.vectorsPct, t('archiveVectorsNote'))}
+    </div>
+    ${notes.length ? `<div class="coverage-advice" role="note">${notes.map(esc).join(' · ')}</div>` : ''}
+  </section>`;
+}
+
 async function viewOverview() {
   const [d, g] = await Promise.all([
     api(`/api/overview${q(base())}`),
     api('/api/digest').catch(() => null),
   ]);
   const cov = d.coverage;
-  const thin = cov.videosPublishedInPeriod < 5;
 
   view.innerHTML = `
-    ${thin ? notice(t('thinWindow', {
-      period: plabel(state.period), inWindow: cov.videosPublishedInPeriod, total: num(cov.videosTotal),
-    })) : ''}
-
+    <div class="brain-hero">
+      <div><div class="brain-hero-eyebrow">YOUTUBE BRAIN · RESEARCH STUDIO</div>
+        <h1>${esc(t('heroTitle'))}</h1><p>${esc(t('heroSub'))}</p></div>
+      <div class="brain-hero-links"><a href="#/find">${esc(t('heroFind'))}</a><a href="#/viral">${esc(t('heroViral'))}</a></div>
+    </div>
     <div class="tiles">
       ${tile(t('tileChannels'), num(d.stats.channels))}
       ${tile(t('tileVideos'), num(d.stats.videos))}
@@ -57,6 +100,8 @@ async function viewOverview() {
       ${tile(t('tileInWindow'), num(cov.videosPublishedInPeriod), plabel(state.period))}
       ${tile(t('tileNoEmbedding'), num(d.stats.videos_without_embedding), t('workerWillFill'))}
     </div>
+
+    ${archiveCoverageCard(cov, d.stats, plabel(state.period))}
 
     ${digestBlock(g)}
 

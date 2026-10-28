@@ -1,4 +1,7 @@
 export default {
+  observationUnknown: "Observation history is unavailable.",
+  observationLimited: "Fewer than two comparable measurements in the first 24h; no 24h speed is inferred.",
+  observationMeasured: "Observed archive interval: hours {start}–{end} after publishing, {rate} new views/hour within that interval. Not an exact 24h total.",
   emptyBasket: 'add videos with the "compare" link on any video card',
   missing: 'Not in your database: {ids}',
   title: 'Trajectory comparison',

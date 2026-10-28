@@ -14,7 +14,7 @@
    Перевод -- только при рендере: текст, вычисленный при импорте модуля, при
    смене языка не обновится. */
 
-const SUPPORTED = ['ru', 'en'];
+const SUPPORTED = ['ru', 'en', 'tr'];
 // языки, носителям которых по умолчанию удобнее русский интерфейс
 const RU_FAMILY = ['ru', 'uk', 'be', 'kk', 'uz', 'ky', 'tg'];
 const STORE_KEY = 'nf.locale';
@@ -30,6 +30,7 @@ function browserLocale() {
   const langs = navigator.languages?.length ? navigator.languages : [navigator.language || 'en'];
   for (const l of langs) {
     const base = String(l).toLowerCase().split('-')[0];
+    if (base === 'tr') return 'tr';
     if (RU_FAMILY.includes(base)) return 'ru';
     if (base === 'en') return 'en';
   }
@@ -45,7 +46,7 @@ function getLocale() { return locale; }
    (users.locale) его не перебивает. */
 function hasStoredLocale() { return storedLocale() !== null; }
 
-function intlLocale() { return locale === 'ru' ? 'ru-RU' : 'en-US'; }
+function intlLocale() { return locale === 'ru' ? 'ru-RU' : locale === 'tr' ? 'tr-TR' : 'en-US'; }
 
 const listeners = new Set();
 function onLocaleChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -133,7 +134,7 @@ function dict(tables) {
   return function t(key, params = {}) {
     let entry = tables[locale]?.[key];
     if (entry === undefined) {
-      warnOnce(key);
+      if (locale !== 'tr') warnOnce(key);
       entry = tables.en?.[key] ?? tables.ru?.[key] ?? key;
     }
     return interpolate(pick(entry, params), params);

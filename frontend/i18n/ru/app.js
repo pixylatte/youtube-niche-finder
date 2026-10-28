@@ -15,5 +15,9 @@ export default {
   p90d: '90 дней',
   pAll: 'всё время',
   reload: 'Обновить',
+  navResearch: 'Исследование',
+  navCompetitors: 'Конкуренты и каналы',
+  navContent: 'Контент-студия',
+  navSystem: 'Система и помощь',
   sessionExpired: 'Сессия закончилась — войдите снова.',
 };

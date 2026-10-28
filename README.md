@@ -1,4 +1,8 @@
-# niche-finder
+# YouTube Brain
+
+**YouTube araştırma ve kanal analiz paneli.** Niş keşfi, viral videolar, rakip kanallar ve içerik stratejisi aynı arayüzde. Türkçe arayüz ve yeni tasarım çalışması [PR #2](https://github.com/pixylatte/youtube-niche-finder/pull/2) üzerinde sürüyor; canlı VDS kurulumu değildir.
+
+Bu depo, [pandich93/youtube-niche-finder](https://github.com/pandich93/youtube-niche-finder) projesinden geliştirilmiş bir fork'tur. Orijinal eser sahibi **Fozil Umarov**, lisans **MIT**; [LICENSE](LICENSE) ve telif bildirimleri korunmuştur. Aşağıdaki eski sürüm, CI ve kapsama rozetleri **orijinal projeye** aittir, bu fork için test sonucu sayılmaz.
 
 **YouTube research for creators: find a niche that is growing, see which videos from small channels took off and why, and check your idea before you film it.**
 
@@ -9,12 +13,7 @@
 [![MCP](https://img.shields.io/badge/MCP-100%20tools-8A2BE2?style=flat-square)](backend/README.md#tools)
 [![Stars](https://img.shields.io/github/stars/pandich93/youtube-niche-finder?style=flat-square)](https://github.com/pandich93/youtube-niche-finder/stargazers)
 
-> **Status: the hosted version is coming soon.** Accounts with sign-up,
-> tariffs and connecting your own channel are built; the online service is
-> being prepared for its first users. Want early
-> access? [Open an issue titled "Early access"](https://github.com/pandich93/youtube-niche-finder/issues/new?title=Early%20access)
-> or star the repository to follow the launch. Can't wait?
-> [Run your own copy today](docs/self-hosting.md) — it is free and open source.
+> **Fork durumu:** Türkçe/markalama tasarımı geliştirme dalındadır. Dağıtım henüz doğrulanmadı. Self-host kurulum kılavuzu için [orijinal belgeler](docs/self-hosting.md) kullanılabilir.
 
 ![niche-finder dashboard: overview — corpus totals, the last 24 hours (new outliers, accelerating videos, growing channels), recent outlier channels and future competition](assets/dashboard.jpg)
 

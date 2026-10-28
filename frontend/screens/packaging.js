@@ -4,8 +4,9 @@ import { view, plabel, base, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/packaging.js';
 import en from '../i18n/en/packaging.js';
+import tr from '../i18n/tr/packaging.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------------ Перепаковки */
 

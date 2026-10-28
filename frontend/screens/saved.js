@@ -4,8 +4,9 @@ import { view, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/saved.js';
 import en from '../i18n/en/saved.js';
+import tr from '../i18n/tr/saved.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* --------------------------------------------------------------- Избранное */
 

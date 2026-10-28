@@ -44,8 +44,10 @@ from application import collabs as CLB
 from application import collecting as collector
 from application import content_calendar as CAL
 from application import content_gaps as CG
+from application import daily_decisions as DAILY
 from application import digest as DG
 from application import discovery as trends
+from application import discovery_activity as DA
 from application import enrichment as EN
 from application import hook_score as HK
 from application import impersonation as IMP
@@ -643,6 +645,30 @@ def health(request: Request):
     }
 
 
+@app.get("/api/discovery-activity")
+def discovery_activity():
+    """Read-only scheduler markers and separately metered YouTube API budgets.
+
+    The worker may mark a scheduled cycle after an unsuccessful operation.
+    Neither this endpoint nor quota counters prove Docker worker liveness or
+    successful discovery. Existing auth middleware protects this endpoint.
+    """
+    conn = db.get_conn()
+    try:
+        return DA.summarize(
+            daily_marker=db.get_meta(conn, "worker_last_daily"),
+            topic_marker=db.get_meta(conn, "worker_last_topic_search"),
+            run_record=db.get_meta(conn, "worker_discovery_last_run"),
+            topic_run_record=db.get_meta(conn, "worker_topic_search_last_result"),
+            calls_today=collector.search_calls_today(conn),
+            search_limit=yt.SEARCH_DAILY_CALL_LIMIT,
+            units_today=collector.units_today(conn),
+            unit_limit=yt.DAILY_UNIT_LIMIT,
+        )
+    finally:
+        conn.close()
+
+
 @app.get("/api/stats")
 def stats(request: Request):
     return Q.db_stats(user_id=_feed_user(request))
@@ -736,6 +762,18 @@ def search(query: str = None, niche: str = None, period: str = "all",
             min_video_length=min_video_length, max_video_length=max_video_length,
             min_rpm=min_rpm, max_rpm=max_rpm,
             sort_by=sort_by, limit=limit, min_ypp_status=min_ypp_status or None)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/daily-decisions")
+def daily_decision_leads(profile: str = "kayip", period: str = "30d", limit: int = 5):
+    """Research candidates from local, labelled niches; not verified ideas.
+
+    Uses no YouTube API, external search, LLM, DB writes or OAuth credentials.
+    """
+    try:
+        return DAILY.daily_decisions(profile=profile, period=period, limit=limit)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

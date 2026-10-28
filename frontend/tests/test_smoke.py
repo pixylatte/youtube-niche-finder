@@ -33,14 +33,15 @@ SHOTS = Path(__file__).resolve().parent / "screenshots"
 # на объекты из seed_demo.py.
 ROUTES = [
     "overview", "find", "viral", "channels", "categories", "keywords", "tags",
-    "tracker", "alerts", "ideas", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
+    "tracker", "alerts", "ideas", "brainNext", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
     "niches", "enter", "own", "data", "help", "mcp", "plan", "admin", "profile",
-    "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f", "brief/avid000",
+    "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f",
+    "channel-compare/UC0000000000000000000a,UC0000000000000000000f", "brief/avid000",
     "brief/avid000?gap=how%20to%20start%20a%20tiny%20AI%20lab%3F",
     "compare/avid000,avid001",
 ]
 
-LOCALES = ["ru", "en"]
+LOCALES = ["ru", "en", "tr"]
 
 # Кириллица, допустимая в английском интерфейсе: данные из seed_demo.py
 # (название канала), а не текст интерфейса.
@@ -201,6 +202,504 @@ def test_screen_renders_without_errors(browser, base_url, route, locale):
         assert not left, f"#/{route} (en): русский текст в интерфейсе: {left}"
 
 
+
+@pytest.mark.parametrize("route,expected", [
+    ("overview", ["YouTube Brain", "Genel Bakış", "Nişleri keşfet"]),
+    ("find", ["Niş Keşfi", "Filtreleri temizle"]),
+    ("viral", ["Viral Videolar", "Küçük Kanalların Viral Videoları"]),
+    ("ideas", ["Fikir Analizi", "Video Fikri Analizi"]),
+    ("categories", ["Popüler Kategoriler"]),
+    ("keywords", ["Yükselen Anahtar Kelimeler"]),
+])
+def test_youtube_brain_turkish_navigation_and_core_screens(browser, base_url, route, expected):
+    """The Turkish browser preference renders translated core UI; quota buttons stay untouched."""
+    page = _new_page(browser, "tr")
+    errors = []
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    try:
+        page.goto(f"{base_url}/#/{route}")
+        page.wait_for_function(READY_JS, timeout=30000)
+        page.wait_for_load_state("networkidle")
+        assert page.title() == "YouTube Brain | YouTube Araştırma Merkezi"
+        assert page.locator(".brand-name").inner_text() == "YouTube Brain"
+        assert page.evaluate("document.documentElement.lang") == "tr"
+        assert page.evaluate("localStorage.getItem('nf.locale')") == "tr"
+        combined = page.inner_text("#view") + page.inner_text(".sidebar") + page.inner_text(".topbar")
+        for phrase in expected:
+            assert phrase in combined, (route, phrase, combined[:900])
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
+    """Keep original en->ru click behavior; add ru->tr without a full reload."""
+    page = _new_page(browser, "en")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS, timeout=30000)
+        page.evaluate("window.sameDoc = true")
+        page.select_option("#langSelect", "ru")
+        page.wait_for_function("document.documentElement.lang === 'ru'")
+        page.select_option("#langSelect", "tr")
+        page.wait_for_function("document.documentElement.lang === 'tr'")
+        page.wait_for_function(
+            "() => document.querySelector('#crumbSection').textContent === 'Genel Bakış'"
+        )
+        assert page.evaluate("window.sameDoc") is True
+        assert page.evaluate("localStorage.getItem('nf.locale')") == "tr"
+        assert page.inner_text(".brand-name") == "YouTube Brain"
+    finally:
+        page.context.close()
+
+
+
+
+
+
+
+
+
+
+
+
+def test_brain_channel_compare_link_normalizes_ids_without_storage(browser, base_url):
+    """Only 2-3 safe, unique channel IDs in a shareable URL; no stored basket."""
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        result = page.evaluate("""async () => {
+            const { normalizeChannelIds, channelCompareHref } =
+              await import('/channel-compare-utils.js');
+            const a = 'UC0000000000000000000a';
+            const f = 'UC0000000000000000000f';
+            const b = 'UC0000000000000000000b';
+            const normal = 'UC' + 'a'.repeat(22);
+            return {
+                demoIds: normalizeChannelIds([a, a, f, b, normal]),
+                fullLength: normalizeChannelIds([normal]).length,
+                malformed: normalizeChannelIds([a, '%E0%A4%A', 'UCbad', '<script>']),
+                href: channelCompareHref([a, f]),
+                single: channelCompareHref([a]),
+                basket: localStorage.getItem('nf.channel-compare'),
+            };
+        }""")
+        assert result["demoIds"] == [
+            "UC0000000000000000000a", "UC0000000000000000000f",
+            "UC0000000000000000000b"]
+        assert result["fullLength"] == 1
+        assert result["malformed"] == ["UC0000000000000000000a"]
+        assert result["href"] == (
+            "#/channel-compare/UC0000000000000000000a,UC0000000000000000000f")
+        assert result["single"] is None
+        assert result["basket"] is None
+    finally:
+        page.context.close()
+
+
+def test_brain_channel_compare_table_displays_existing_data_and_missing(browser, base_url):
+    """Two read-only GETs; missing 30d growth is a dash, not a fabricated zero."""
+    import json
+
+    a = "UC0000000000000000000a"
+    f = "UC0000000000000000000f"
+    sample = {
+        "found": True,
+        "profile": {"title": "Archive Alpha", "subscribers": 1800,
+                    "videoCount": 100},
+        "performance": {"videosAnalysed": 20, "medianViewsPerVideo": 4200,
+                        "medianViewsPerSubscriber": 2.3, "viralSkew": 1.7},
+        "cadence": {"uploadsInPeriod": 4, "uploadsPerWeekLifetime": 1.5,
+                    "shortsSharePercent": 25.0},
+        "growth": {"30d": {"subscribers": None, "views": None}},
+        "snapshots": 1,
+        "topOutliers": [{"outlierScore": 3.4}],
+    }
+    page = _new_page(browser, "tr")
+    requests = []
+
+    def respond(route):
+        requests.append(route.request.url)
+        channel_id = route.request.url.split("/api/channels/")[1].split("?")[0]
+        if channel_id == f:
+            route.fulfill(status=404, content_type="application/json",
+                          body='{"detail":"channel missing locally"}')
+        else:
+            route.fulfill(status=200, content_type="application/json",
+                          body=json.dumps(sample))
+
+    page.route("**/api/channels/*", respond)
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/channel-compare/{a},{f}")
+        page.wait_for_selector(".channel-compare-table", timeout=30000)
+        txt = page.inner_text("#view")
+        assert "Rakip Kanalları Karşılaştır" in txt
+        assert "Archive Alpha" in txt
+        assert "Arşivde incelenen video" in txt
+        assert "30 günlük ölçülebilen abone artışı / gün" in txt
+        assert f in txt  # missing channel notice retains the requested ID
+        assert "yerel arşivde bulunamadı" in txt
+        assert page.locator(".channel-compare-table tbody tr").count() == 13
+        assert len(requests) == 2 and all("/api/channels/" in url for url in requests)
+        assert all("period=" in url for url in requests)
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_brain_channel_compare_selection_needs_two_channels(browser, base_url):
+    """No POST or discovery: selection only changes the hash URL."""
+    import json
+
+    ids = ["UC0000000000000000000a", "UC0000000000000000000f"]
+    channels = [{"channelId": cid, "channelTitle": "Sample " + str(i),
+                 "subscribers": 200 + i, "multiplier": 3.5, "strength": 2,
+                 "videosInWindow": 4} for i, cid in enumerate(ids)]
+    page = _new_page(browser, "tr")
+    page.route("**/api/outlier-channels*", lambda route: route.fulfill(
+        status=200, content_type="application/json", body=json.dumps({
+            "channels": channels, "hint": None})))
+    try:
+        page.goto(f"{base_url}/#/channels")
+        page.wait_for_selector(".js-compare-channel", timeout=30000)
+        btn = page.locator("#compareChannelsBtn")
+        assert btn.is_disabled()
+        picks = page.locator(".js-compare-channel")
+        assert picks.count() == 2
+        picks.nth(0).check()
+        assert btn.is_disabled()
+        picks.nth(1).check()
+        assert btn.is_enabled()
+        btn.click()
+        page.wait_for_function("""() => location.hash.startsWith('#/channel-compare/')""")
+        assert page.evaluate("location.hash") == "#/channel-compare/" + ",".join(ids)
+    finally:
+        page.context.close()
+
+
+def test_brain_competitor_evidence_panel_is_displayed_without_extra_quota(browser, base_url):
+    """Use already-loaded channel endpoints; display archive and snapshot limitations."""
+    page = _new_page(browser, "tr")
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/channel/UC0000000000000000000a")
+        page.wait_for_selector("#channelEvidenceTitle", timeout=30000)
+        assert "Rakip Kanal Veri Özeti" in page.inner_text("#view")
+        assert page.locator(".channel-evidence-item").count() == 4
+        text = page.locator(".channel-evidence-card").inner_text()
+        assert "Toplanan / kanalda bildirilen video" in text
+        assert "Kanal istatistik kayıtları" in text
+        assert "24 saatlik hızı ölçülen" in text
+        assert "Vektörü hesaplanan" in text
+        assert "başarı olasılığı veya güven puanı değildir" in text
+        assert page.locator('.channel-evidence-card a[href="#/data"]').count() == 1
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_brain_channel_evidence_calculations_are_honest_about_missing_data(browser, base_url):
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        cases = page.evaluate("""async () => {
+            const { channelEvidence } = await import('/channel-evidence.js');
+            return [
+                channelEvidence(
+                    {profile: {videoCount: 120}, performance: {videosAnalysed: 65},
+                     growth: {'24h': {views: {delta: 0, per_day: 0}},
+                              '7d': {views: null, subscribers: null},
+                              '30d': {subscribers: {delta: 12}}}},
+                    {videos: [{vph24h: null}, {vph24h: 0}, {vph24h: 12}]},
+                    {count: 5}, {videosEmbedded: 40}),
+                channelEvidence(
+                    {profile: {videoCount: 0}, performance: {videosAnalysed: 0},
+                     growth: {}},
+                    {videos: []}, {count: 0}, {}),
+                channelEvidence(
+                    {profile: {videoCount: 3}, performance: {videosAnalysed: 9}},
+                    {videos: [{vph24h: null}]}, {count: 1},
+                    {videosEmbedded: -1}),
+            ];
+        }""")
+        complete, empty, inconsistent = cases
+        assert complete["archivePercent"] == 54
+        assert complete["vphAvailable"] == 2 and complete["sampledCount"] == 3
+        assert complete["observedGrowthWindows"] == ["24h", "30d"]
+        assert complete["archiveIncomplete"] is True
+        assert empty["archivePercent"] is None
+        assert empty["historyInsufficient"] is True
+        assert empty["embeddingMissing"] is False
+        assert inconsistent["archivePercent"] is None
+        assert inconsistent["velocityInsufficient"] is True
+        assert inconsistent["embedded"] is None
+    finally:
+        page.context.close()
+
+
+def test_brain_niche_evidence_table_does_not_call_coverage_confidence(browser, base_url):
+    """The ranking page shows exact sample sizes and a visible unscored reason."""
+    page = _new_page(browser, "tr")
+    fake = {
+        "niches": [
+            {
+                "niche": "history", "label": "History", "videos": 60, "channels": 6,
+                "recentVideos": 26, "score": 61, "band": "high", "coverage": 0.8,
+                "status": "stable", "confidence": "good",
+                "breakdown": [
+                    {"key": k, "value": 1 if i < 4 else None,
+                     "points": 50 if i < 4 else None, "weight": w, "label": k}
+                    for i, (k, w) in enumerate([
+                        ("demand", 25), ("supply", 20), ("newcomers", 20),
+                        ("rpm", 15), ("template", 10), ("policy", 10)])
+                ]
+            },
+            {
+                "niche": "thin", "label": "Thin", "videos": 3, "channels": 1,
+                "recentVideos": 1, "score": None, "band": None,
+                "coverage": 0.4, "reason": "insufficient-data",
+                "status": "insufficient-data", "confidence": "insufficient",
+                "breakdown": [
+                    {"key": k, "value": 1 if k in ("demand", "rpm") else None,
+                     "points": 50 if k in ("demand", "rpm") else None,
+                     "weight": w, "label": k}
+                    for k, w in [
+                        ("demand", 25), ("supply", 20), ("newcomers", 20),
+                        ("rpm", 15), ("template", 10), ("policy", 10)]
+                ]
+            },
+        ]
+    }
+    import json
+    page.route("**/api/niches/ranking*", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body=json.dumps(fake, ensure_ascii=False)))
+    problems = []
+    page.on("pageerror", lambda err: problems.append(str(err)))
+    try:
+        page.goto(f"{base_url}/#/enter")
+        page.wait_for_function(READY_JS)
+        page.wait_for_selector(".niche-evidence-line")
+        txt = page.inner_text("#view")
+        assert "60 video · 6 kanal · son 30 günde 26 video" in txt
+        assert "3 video · 1 kanal · son 30 günde 1 video" in txt
+        assert "Bilinen ölçüt ağırlığı: %80" in txt
+        assert "Bilinen ölçüt ağırlığı: %40" in txt
+        assert "yeterli veri yok: niş eğilimi hesaplanamıyor" in txt
+        assert "güven" in page.locator(".evidence-weight").first.get_attribute("data-tip")
+        assert not problems, problems
+    finally:
+        page.context.close()
+
+
+def test_brain_niche_evidence_unknown_and_zero_are_not_rounded_into_claims(browser, base_url):
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        results = page.evaluate("""async () => {
+            const { evidence } = await import('/niche-evidence.js');
+            return [
+                evidence({videos: 0, channels: 0, recentVideos: 0, score: 0,
+                    coverage: 0, breakdown: []}),
+                evidence({videos: 3, channels: undefined, recentVideos: null,
+                    score: null, coverage: undefined}),
+                evidence({videos: 10, channels: -2, recentVideos: 900,
+                    score: null, coverage: 2, reason: 'not-known'}),
+            ];
+        }""")
+        zero, missing, invalid = results
+        assert zero["hasScore"] is True and zero["knownWeightPct"] == 0
+        assert zero["distinctChannels"] == 0 and zero["recentVideos"] == 0
+        assert missing["distinctChannels"] is None and missing["knownWeightPct"] is None
+        assert invalid["distinctChannels"] is None and invalid["knownWeightPct"] is None
+        assert invalid["missingReason"] is None
+    finally:
+        page.context.close()
+
+
+def test_brain_archive_coverage_is_global_and_visible(browser, base_url):
+    """Evidence metadata is clearly scoped and does not pretend to be a niche-specific score."""
+    page = _new_page(browser, "tr")
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        page.locator("#archiveCoverageTitle").wait_for()
+        assert page.locator(".coverage-item").count() == 4
+        text = page.locator(".coverage-card").inner_text()
+        assert "Arşiv Veri Durumu" in text
+        assert "seçilen nişe özel değildir" in text
+        assert "güvenilirlik puanı değildir" in text
+        assert "Geçmiş kaydı olan videolar" in text
+        assert "Vektörü olan videolar" in text
+        assert page.locator('.coverage-card a[href="#/data"]').count() == 1
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_brain_archive_coverage_derives_counts_without_guessing(browser, base_url):
+    """Zero denominator, missing keys and inconsistent counters never become invented percentages."""
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        calculated = page.evaluate("""async () => {
+            const { archiveCoverage } = await import('/coverage-insights.js');
+            return [
+                archiveCoverage({ videosTotal: 200, videosPublishedInPeriod: 4,
+                  videosWithHistory: 80, videosWithCategory: 160 },
+                  { videos_without_embedding: 25 }),
+                archiveCoverage({ videosTotal: 0, videosPublishedInPeriod: 0,
+                  videosWithHistory: 0, videosWithCategory: 0 },
+                  { videos_without_embedding: 0 }),
+                archiveCoverage({ videosTotal: 7, videosWithHistory: 8,
+                  videosWithCategory: null }, { videos_without_embedding: 9 }),
+                archiveCoverage({}, {}),
+            ];
+        }""")
+        complete, empty, inconsistent, missing = calculated
+        assert complete["period"] == 4 and complete["periodSparse"] is True
+        assert complete["historyPct"] == 40
+        assert complete["categoriesPct"] == 80
+        assert complete["vectors"] == 175 and complete["vectorsPct"] == 88
+        assert empty["historyPct"] is None and empty["vectorsPct"] is None
+        assert inconsistent["historyPct"] is None and inconsistent["vectors"] is None
+        assert missing["total"] is None and missing["periodPct"] is None
+    finally:
+        page.context.close()
+
+
+def test_brain_navigation_groups_cover_all_routes_and_open_deep_links(browser, base_url):
+    """Grouping is purely visual: no existing route disappears or becomes inaccessible."""
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        groups = page.locator("#nav details.nav-group")
+        assert groups.count() == 4
+        assert [x.strip() for x in groups.locator("summary").all_inner_texts()] == [
+            "Araştırma", "Rakipler ve Kanallar", "İçerik Stüdyosu", "Sistem ve Destek"
+        ]
+        nav_urls = page.locator("#nav a.nav-item").evaluate_all(
+            "(items) => items.map(item => item.getAttribute('href'))"
+        )
+        assert len(nav_urls) == len(set(nav_urls)) == 27
+        assert set(nav_urls) == {f"#/{route}" for route in ROUTES if "/" not in route}
+        assert page.locator('a.nav-item[href="#/overview"]').get_attribute("aria-current") == "page"
+        assert not page.locator('details[data-group="system"]').evaluate("(el) => el.open")
+        page.goto(f"{base_url}/#/profile")
+        page.wait_for_function(READY_JS)
+        assert page.locator('details[data-group="system"]').evaluate("(el) => el.open")
+        assert page.locator('a.nav-item[href="#/profile"]').get_attribute("aria-current") == "page"
+    finally:
+        page.context.close()
+
+
+def test_brain_navigation_preferences_survive_reload_and_languages(browser, base_url):
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        group = page.locator('details[data-group="research"]')
+        assert group.evaluate("(el) => el.open")
+        group.locator("summary").click()
+        page.wait_for_function("""() => {
+            const v = JSON.parse(localStorage.getItem('yb.nav.groups.v1') || '{}');
+            return v.research === false;
+        }""")
+        page.reload()
+        page.wait_for_function(READY_JS)
+        assert not page.locator('details[data-group="research"]').evaluate("(el) => el.open")
+        page.select_option("#langSelect", "en")
+        page.wait_for_function("""() => document.querySelector(
+            'details[data-group="research"] > summary').textContent === 'Research'""")
+        assert not page.locator('details[data-group="research"]').evaluate("(el) => el.open")
+        page.goto(f"{base_url}/#/find")
+        page.wait_for_function(READY_JS)
+        assert page.locator('details[data-group="research"]').evaluate("(el) => el.open")
+        assert page.locator('a.nav-item[href="#/find"]').get_attribute("aria-current") == "page"
+    finally:
+        page.context.close()
+
+
+
+@pytest.mark.parametrize("route,required", [
+    ("help", ("YouTube Brain nedir?", "Ölçümler nasıl okunur?",
+              "Sık Sorulan Sorular", "Her sayı nereden geliyor?")),
+    ("mcp", ("MCP Bağlantısı", "Veri toplama", "Bağlantı kontrolü")),
+])
+def test_turkish_help_and_mcp_panels_use_localised_labels(browser, base_url, route, required):
+    """Help and MCP documentation must be Turkish while code snippets keep their exact syntax."""
+    page = _new_page(browser, "tr")
+    problems = []
+    page.on("pageerror", lambda error: problems.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/{route}")
+        page.wait_for_function(READY_JS)
+        page.wait_for_load_state("networkidle")
+        content = page.inner_text("#view")
+        assert all(text in content for text in required), (route, content[:1000])
+        assert not problems, problems
+        if route == "mcp":
+            assert "docker compose" in content
+            assert "niche-finder" in content
+    finally:
+        page.context.close()
+
+
+def test_completed_turkish_dictionary_keys_and_placeholders(browser, base_url):
+    """Fully translated namespaces keep matching keys, plurals and template fields."""
+    namespaces = (
+        "app", "router", "overview", "find", "viral", "ideas", "categories",
+        "keywords", "shared", "channels", "tracker", "saved", "calendar", "alerts",
+        "data", "tags", "language", "clusters", "titles", "packaging", "niches",
+        "metadata", "transcripts", "enter", "compare", "manualRuns",
+        "planState", "impersonation", "plan", "hookView",
+        "ui", "account", "profile", "own", "brief", "channel", "niche",
+        "admin", "mcp", "help",
+    )
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        dictionaries = page.evaluate("""async names => {
+            return await Promise.all(names.map(async name => {
+                const en = (await import('/i18n/en/' + name + '.js')).default;
+                const tr = (await import('/i18n/tr/' + name + '.js')).default;
+                return { name, en, tr };
+            }));
+        }""", list(namespaces))
+    finally:
+        page.context.close()
+
+    fields = lambda value: sorted(set(re.findall(r"\{(\w+)\}", str(value))))
+    errors = []
+    for entry in dictionaries:
+        namespace, en, tr = entry["name"], entry["en"], entry["tr"]
+        for key in set(en) ^ set(tr):
+            errors.append(f"{namespace}.{key}: missing Turkish/English key")
+        for key in set(en) & set(tr):
+            # Dict-valued plural strings have exactly matching plural variants.
+            if isinstance(en[key], dict) != isinstance(tr[key], dict):
+                errors.append(f"{namespace}.{key}: different plural shape")
+                continue
+            if isinstance(en[key], dict) and set(en[key]) != set(tr[key]):
+                errors.append(f"{namespace}.{key}: different plural keys")
+            def flatten(v):
+                return " ".join(str(x) for x in v.values()) if isinstance(v, dict) else str(v)
+            if fields(flatten(en[key])) != fields(flatten(tr[key])):
+                errors.append(f"{namespace}.{key}: mismatched template placeholders")
+    assert not errors, "\n".join(sorted(errors))
+
+
 def test_dictionaries_match_and_every_key_used_exists(browser, base_url):
     """У каждого неймспейса одинаковые ключи и {плейсхолдеры} в ru и en, и каждый
     t('ключ') в коде есть в словаре своего модуля."""
@@ -256,7 +755,7 @@ def test_language_switch_rerenders_without_reload(browser, base_url):
         page.wait_for_function(READY_JS, timeout=30000)
         assert page.inner_text("#crumbSection") == "Overview"
         page.evaluate("window.__sameDocument = true")
-        page.click("#langToggle")
+        page.select_option("#langSelect", "ru")
         page.wait_for_function("() => document.querySelector('#crumbSection').textContent === 'Обзор'",
                                timeout=15000)
         state = page.evaluate("""() => ({ lang: document.documentElement.lang,
@@ -282,6 +781,8 @@ def test_language_switch_rerenders_without_reload(browser, base_url):
     # Тренд ниши (план 08): блок на экране ниши и колонка в списке ниш.
     ("niche/demo", ["Тренд ниши", "Видео за 30 дней"]),
     ("niches", ["Тренд"]),
+    ("channel-compare/UC0000000000000000000a,UC0000000000000000000f",
+     ["Сравнение каналов конкурентов", "Медиана просмотров на видео"]),
     # Что общего у выстреливших (план 29): блок на экране ниши, на демо-данных -- «мало данных».
     ("niche/demo", ["Что общего у выстреливших", "Корреляция, не причина"]),
     # Другой язык (план 26): на демо-данных -- либо выбор пары, либо подсказка собрать второй язык.
@@ -329,7 +830,7 @@ def test_sign_in_screen_when_multi_user_mode_has_no_session(browser, base_url):
         text = page.inner_text("#view")
     finally:
         page.context.close()
-    assert "Вход в niche-finder" in text and not problems
+    assert "Вход в YouTube Brain" in text and not problems
 
 
 
@@ -347,3 +848,86 @@ def test_token_section_shows_only_with_sign_in(browser, base_url):
     finally:
         page.context.close()
     assert "Личные токены" in text and "ext" in text
+
+
+def test_brain_next_competitor_format_repeatability_uses_local_gets_only(browser, base_url):
+    """The user explicitly requests local repeatability; no Youtube/LLM POST is made."""
+    import json
+
+    ids = ["UC0000000000000000000a", "UC0000000000000000000f"]
+    channels = []
+    for i, ident in enumerate(ids):
+        channels.append({
+            "found": True,
+            "profile": {"title": "Archive Rival " + str(i), "subscribers": 1200,
+                        "videoCount": 35},
+            "performance": {"videosAnalysed": 12},
+            "cadence": {"uploadsInPeriod": 2},
+            "topOutliers": [{"videoId": "abcdefghij" + str(i),
+                             "title": "Historical long documentary",
+                             "outlierScore": 3.5}],
+        })
+    page = _new_page(browser, "tr")
+    requests = []
+
+    def respond_channel(route):
+        url = route.request.url
+        index = 1 if ids[1] in url else 0
+        requests.append(("channel", route.request.method))
+        route.fulfill(status=200, content_type="application/json",
+                      body=json.dumps(channels[index]))
+
+    def respond_repeatability(route):
+        requests.append(("repeatability", route.request.method))
+        route.fulfill(status=200, content_type="application/json", body=json.dumps({
+            "verdict": "repeatable", "similarVideos": 7, "channels": 4,
+            "channelsHit": 3, "hitScore": 0.62, "examples": [],
+        }))
+
+    page.route("**/api/channels/UC*", respond_channel)
+    page.route("**/api/videos/*/repeatability", respond_repeatability)
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/channel-compare/{','.join(ids)}")
+        page.wait_for_selector("#compareFormatsReview")
+        assert [x for x in requests if x[0] == "repeatability"] == []
+        page.locator("#compareFormatsReview").click()
+        page.get_by_text("Başka kanallarda tekrarlandı", exact=True).first.wait_for()
+        assert len([x for x in requests if x[0] == "repeatability"]) == 2
+        assert all(method == "GET" for _, method in requests)
+        assert "7 ölçülebilir benzer video" in page.locator("#compareFormatsResult").inner_text()
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+def test_brain_next_trajectory_displays_measured_intervals_not_24h_claims(browser, base_url):
+    """Observation caveats use only local trajectory data."""
+    import json
+
+    videos = [
+        {"videoId": "abcdefghijk", "title": "Source A", "channelId": None,
+         "views": 1000, "points": [], "expected": [], "marks": [],
+         "baselineMedianViews": None,
+         "observationReadiness": {
+             "status": "observed-interval",
+             "observedFirstDayRate": {
+                 "fromHours": 3, "toHours": 21, "viewsPerHour": 48.6}}},
+        {"videoId": "lmnopqrstuv", "title": "Source B", "channelId": None,
+         "views": 900, "points": [], "expected": [], "marks": [],
+         "baselineMedianViews": None,
+         "observationReadiness": {"status": "limited", "observedFirstDayRate": None}},
+    ]
+    page = _new_page(browser, "tr")
+    page.route("**/api/videos/trajectory*", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body=json.dumps({"missing": [], "videos": videos, "note": "sample"})))
+    try:
+        page.goto(f"{base_url}/#/compare/abcdefghijk,lmnopqrstuv")
+        page.get_by_text("Gerçek arşiv ölçümü:", exact=False).first.wait_for()
+        result = page.locator("#view").inner_text()
+        assert "3–21" in result
+        assert "Tam 24 saatlik sonuç değildir" in result
+        assert "iki karşılaştırılabilir gerçek ölçüm yok" in result
+    finally:
+        page.context.close()

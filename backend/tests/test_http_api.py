@@ -584,3 +584,123 @@ def test_notification_settings_routes(stub):
     from application import notify_settings as ns
     stub("NS", "save", raises=ns.SettingsError("mode must be one of"))
     assert client.put("/api/settings/notifications", json={"mode": "x"}).status_code == 400
+
+def test_discovery_activity_reads_only_local_scheduler_metadata(monkeypatch):
+    """No YouTube call, no DB write, and no assertion of worker liveness."""
+    class Conn:
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    conn = Conn()
+    meta = {
+        "worker_last_daily": "2026-10-28T07:00:00+00:00",
+        "worker_last_topic_search": None,
+    }
+    monkeypatch.setattr(api.db, "get_conn", lambda: conn)
+    monkeypatch.setattr(api.db, "get_meta", lambda c, key: meta.get(key))
+    monkeypatch.setattr(api.collector, "search_calls_today", lambda c: 2)
+    monkeypatch.setattr(api.collector, "units_today", lambda c: 8)
+    monkeypatch.setattr(api.yt, "SEARCH_DAILY_CALL_LIMIT", 100)
+    monkeypatch.setattr(api.yt, "DAILY_UNIT_LIMIT", 3000)
+
+    result = api.discovery_activity()
+    assert conn.closed
+    assert result["searchQuota"] == {
+        "callsToday": 2, "dailyLimit": 100, "callsLeft": 98}
+    assert result["unitQuota"] == {
+        "unitsToday": 8, "dailyLimit": 3000, "unitsLeft": 2992}
+    assert result["dailySchedulerMarker"]["at"] is not None
+    assert result["topicSchedulerMarker"]["state"] == "missing"
+    assert result["discoverySuccessVerified"] is False
+
+def test_discovery_activity_endpoint_includes_last_worker_query_outcomes(monkeypatch):
+    """Record is read locally; no worker activity or real network is invoked."""
+    import json
+    from datetime import datetime, timezone
+
+    from application.discovery_activity import build_run
+
+    class Conn:
+        def close(self):
+            self.closed = True
+
+    conn = Conn()
+    conn.closed = False
+    run = build_run(
+        [{"status": "ok", "videos_found": 8, "videos_stored": 7,
+          "channels_stored": 4}], 1, now=datetime.now(timezone.utc))
+    from application.discovery_activity import build_topic_result
+    topic = build_topic_result("ok", {
+        "topicsSearched": 2, "videosStored": 4,
+        "searchCalls": 2, "stoppedBy": None, "skippedUsers": [],
+    }, now=datetime.now(timezone.utc))
+    data = {
+        "worker_discovery_last_run": json.dumps(run),
+        "worker_topic_search_last_result": json.dumps(topic),
+    }
+    monkeypatch.setattr(api.db, "get_conn", lambda: conn)
+    monkeypatch.setattr(api.db, "get_meta", lambda c, key: data.get(key))
+    monkeypatch.setattr(api.collector, "search_calls_today", lambda c: 2)
+    monkeypatch.setattr(api.collector, "units_today", lambda c: 8)
+    result = api.discovery_activity()
+    assert conn.closed
+    assert result["discoveryRun"]["videosFound"] == 8
+    assert result["discoveryRun"]["successful"] == 1
+    assert result["topicSearchRun"]["videosStored"] == 4
+    assert result["workerRunningVerified"] is False
+    assert result["discoverySuccessVerified"] is False
+
+
+def test_daily_decisions_route_is_quota_free_and_bounded(monkeypatch):
+    seen = []
+
+    def fake_decisions(profile, period, limit):
+        seen.append((profile, period, limit))
+        return {"profile": profile, "status": "insufficient-data", "candidates": [],
+                "youtubeQuotaUsed": 0}
+
+    monkeypatch.setattr(api.DAILY, "daily_decisions", fake_decisions)
+    response = client.get("/api/daily-decisions?profile=islam&period=90d&limit=3")
+    assert response.status_code == 200
+    assert response.json()["profile"] == "islam"
+    assert response.json()["youtubeQuotaUsed"] == 0
+    assert seen == [("islam", "90d", 3)]
+
+
+def test_daily_decisions_route_rejects_invalid_profiles(monkeypatch):
+    def bad_input(profile, period, limit):
+        raise ValueError("profile must be kayip or islam")
+
+    monkeypatch.setattr(api.DAILY, "daily_decisions", bad_input)
+    response = client.get("/api/daily-decisions?profile=unknown")
+    assert response.status_code == 400
+    assert "profile" in response.json()["detail"]
+
+def test_daily_decisions_reads_only_the_selected_workspace_niches(monkeypatch):
+    called = []
+    monkeypatch.setattr(api.DAILY.Q, "list_niches", lambda: [
+        {"slug": "kayıp-sayfalar-osmanlı", "label": "Osmanlı", "video_count": 10},
+        {"slug": "1-dakika-islam-kıssalar", "label": "Kıssalar", "video_count": 12},
+        {"slug": "trending-tr", "label": "Trending", "video_count": 100},
+    ])
+
+    def fake_search(**kwargs):
+        called.append(kwargs)
+        return [{
+            "videoId": "abcdefghijk", "channelId": "UC-ONLY-ISLAM",
+            "title": "Kıssalar araştırma referansı", "channelTitle": "Archive",
+            "views": 1000, "outlierScore": 3.0, "viewsPerSubscriber": 4.5, "isShort": True,
+            "snapshots": 1, "publishedAt": "2026-10-20T00:00:00Z",
+        }]
+
+    monkeypatch.setattr(api.DAILY.Q, "search_outliers", fake_search)
+    result = api.DAILY.daily_decisions(profile="islam", period="30d", limit=5)
+    assert result["status"] == "research-leads"
+    assert len(called) == 1
+    assert called[0]["niche"] == "1-dakika-islam-kıssalar"
+    assert called[0]["only_shorts"] is True
+    assert called[0]["exclude_shorts"] is False
+    assert result["candidates"][0]["channelId"] == "UC-ONLY-ISLAM"
+    assert result["youtubeQuotaUsed"] == 0

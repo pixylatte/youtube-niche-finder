@@ -13,6 +13,7 @@ import { viewTracker } from './screens/tracker.js';
 import { viewAlerts } from './screens/alerts.js';
 import { viewEnter } from './screens/enter.js';
 import { viewIdeas } from './screens/ideas.js';
+import { viewBrainNext } from './screens/brain-next.js';
 import { viewLanguage } from './screens/language.js';
 import { viewTranscripts } from './screens/transcripts.js';
 import { viewNicheClusters } from './screens/clusters.js';
@@ -25,6 +26,7 @@ import { viewNiche } from './screens/niche.js';
 import { viewChannel } from './screens/channel.js';
 import { viewBrief } from './screens/brief.js';
 import { viewCompare } from './screens/compare.js';
+import { viewChannelCompare } from './screens/channel-compare.js';
 import { viewData } from './screens/data.js';
 import { viewHelp } from './screens/help.js';
 import { viewMcp } from './screens/mcp.js';
@@ -36,8 +38,9 @@ import { routeAllowed } from './plan-state.js';
 import { dict } from './i18n.js';
 import ru from './i18n/ru/router.js';
 import en from './i18n/en/router.js';
+import tr from './i18n/tr/router.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 async function guard(fn) {
   view.innerHTML = '<div class="skeleton-page"></div>';
@@ -65,6 +68,7 @@ const ROUTES = {
   tracker: { run: viewTracker },
   alerts: { run: viewAlerts },
   ideas: { run: viewIdeas },
+  brainNext: { run: viewBrainNext },
   language: { run: viewLanguage },
   transcripts: { run: viewTranscripts },
   clusters: { run: viewNicheClusters },
@@ -87,8 +91,15 @@ const ROUTES = {
 const routeTitle = (name) => t(name);
 
 function setActive(href) {
-  document.querySelectorAll('.nav-item').forEach((a) =>
-    a.classList.toggle('active', href != null && a.getAttribute('href') === href));
+  document.querySelectorAll('#nav .nav-item').forEach((a) => {
+    const selected = href != null && a.getAttribute('href') === href;
+    a.classList.toggle('active', selected);
+    if (selected) {
+      a.setAttribute('aria-current', 'page');
+      const group = a.closest('details.nav-group');
+      if (group) group.open = true;
+    } else a.removeAttribute('aria-current');
+  });
 }
 
 async function render() {
@@ -110,6 +121,10 @@ async function render() {
   if (name === 'compare') {
     $('#crumbSection').textContent = t('crumbCompare'); setActive(null);
     return guard(() => viewCompare(arg || ''));
+  }
+  if (name === 'channel-compare') {
+    $('#crumbSection').textContent = t('crumbChannelCompare'); setActive('#/channels');
+    return guard(() => viewChannelCompare(arg || ''));
   }
   if (name === 'niche' && arg) {
     $('#crumbSection').textContent = t('crumbNiche'); setActive('#/niches');

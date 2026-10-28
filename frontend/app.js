@@ -10,11 +10,12 @@ import { viewTwoFactorSetup, adoptBrowserTimezone } from './screens/profile.js';
 import { dict, getLocale, hasStoredLocale, setLocale, onLocaleChange, translateStatic } from './i18n.js';
 import ru from './i18n/ru/app.js';
 import en from './i18n/en/app.js';
+import tr from './i18n/tr/app.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
-// названия языков на самих этих языках -- кнопка показывает, на какой переключит
-const LANG_NAMES = { ru: 'Русский', en: 'English' };
+// Navigation expansion is a device preference only; it never affects feature access.
+const NAV_STORAGE_KEY = 'yb.nav.groups.v1';
 
 let me = { multiUser: false, user: null };
 
@@ -45,12 +46,31 @@ function translateChrome() {
     if (label) label.textContent = routeTitle(a.getAttribute('href').slice(2));
   });
   applyTheme(document.documentElement.dataset.theme || 'dark');
-  $('#langToggle').textContent = LANG_NAMES[getLocale() === 'ru' ? 'en' : 'ru'];
+  $('#langSelect').value = getLocale();
   if (me.multiUser && me.user) $('#signOut').textContent = t('signOutAs', { email: me.user.email });
   renderBanner();
 }
 
+function initNavGroups() {
+  let saved = {};
+  try {
+    const raw = JSON.parse(localStorage.getItem(NAV_STORAGE_KEY) || '{}');
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) saved = raw;
+  } catch { /* Invalid older preference: use accessible HTML defaults. */ }
+  document.querySelectorAll('#nav details.nav-group').forEach((group) => {
+    if (typeof saved[group.dataset.group] === 'boolean') group.open = saved[group.dataset.group];
+    group.addEventListener('toggle', () => {
+      const prefs = {};
+      document.querySelectorAll('#nav details.nav-group').forEach((item) => {
+        prefs[item.dataset.group] = item.open;
+      });
+      try { localStorage.setItem(NAV_STORAGE_KEY, JSON.stringify(prefs)); } catch { /* Private mode. */ }
+    });
+  });
+}
+
 function initChrome() {
+  initNavGroups();
   const per = $('#globalPeriod');
   per.value = state.period;
   per.addEventListener('change', () => {
@@ -65,7 +85,7 @@ function initChrome() {
   $('#themeToggle').addEventListener('click', () =>
     applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
-  $('#langToggle').addEventListener('click', () => setLocale(getLocale() === 'ru' ? 'en' : 'ru'));
+  $('#langSelect').addEventListener('change', (e) => setLocale(e.target.value));
 
   translateChrome();
   addEventListener('hashchange', onHash);
@@ -90,7 +110,9 @@ function listenLocale() {
     if (me.multiUser && me.user) renderPlanLine();
     // язык уведомлений и дайджеста хранится на сервере; без сервера -- не беда.
     // P2-05: в просмотре под пользователем его настройки не трогаем (сервер и так даст 403)
-    if (!inView()) api('/api/me/locale', { method: 'PUT', body: { locale: loc } }).catch(() => {});
+    // The backend currently stores only ru/en locales. Keep tr as a browser-only
+    // preference until server-side validation and translated error messages exist.
+    if (!inView() && loc !== 'tr') api('/api/me/locale', { method: 'PUT', body: { locale: loc } }).catch(() => {});
     if (me.multiUser && !me.user) { showSignIn(); return; }
     await loadScores();
     render();
@@ -104,7 +126,7 @@ async function start() {
   try { me = await api('/api/auth/me'); } catch { /* старый сервер без входа */ }
   // язык, выбранный на другом устройстве, -- если в этом браузере ещё не выбирали;
   // слушатель смены ещё не подписан, поэтому каркас переводим сами
-  if (!hasStoredLocale() && me.locale && setLocale(me.locale, { persist: false })) translateChrome();
+  if (!hasStoredLocale() && getLocale() !== 'tr' && me.locale && setLocale(me.locale, { persist: false })) translateChrome();
   listenLocale();
   setOffers(me.signup);
   if (me.multiUser && !me.user) { if (!openAccountLink(false)) showSignIn(); return; }

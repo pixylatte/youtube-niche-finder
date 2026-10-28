@@ -5,8 +5,9 @@ import { hookResultHtml } from '../hook_view.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/titles.js';
 import en from '../i18n/en/titles.js';
+import tr from '../i18n/tr/titles.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ---------------------------------------------------- Проверить заголовки (09) */
 

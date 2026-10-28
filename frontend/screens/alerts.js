@@ -5,8 +5,9 @@ import { manualRunStatus, manualRunAvailable, wireManualRun } from '../manual-ru
 import { dict, fmtDate, fmtDateTime } from '../i18n.js';
 import ru from '../i18n/ru/alerts.js';
 import en from '../i18n/en/alerts.js';
+import tr from '../i18n/tr/alerts.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ------------------------------------------------------------- Алерты */
 

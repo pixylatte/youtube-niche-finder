@@ -5,15 +5,17 @@ import { manualRunStatus, manualRunAvailable, wireManualRun } from '../manual-ru
 import { dict, fmtDate } from '../i18n.js';
 import ru from '../i18n/ru/data.js';
 import en from '../i18n/en/data.js';
+import tr from '../i18n/tr/data.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ----------------------------------------------------------------- Данные */
 
 async function viewData() {
-  const [h, cov, fresh, runs] = await Promise.all([
+  const [h, cov, fresh, runs, discovery] = await Promise.all([
     api('/api/health'), api(`/api/coverage${q({ period: state.period })}`),
-    api('/api/freshness').catch(() => null), manualRunStatus()]);
+    api('/api/freshness').catch(() => null), manualRunStatus(),
+    api('/api/discovery-activity').catch(() => null)]);
   view.innerHTML = `
     ${h.hasApiKey ? notice(t('apiKeyOk'), 'ok')
                   : notice(t('apiKeyMissing'), 'error')}
@@ -31,6 +33,7 @@ async function viewData() {
       </div>
     </div>
     ${freshnessCard(fresh)}
+    ${discoveryActivityCard(discovery)}
     <div id="costProfiles"></div>
     ${collectForm()}
     ${manualRunAvailable(runs, 'refresh') ? `<div class="card">
@@ -50,6 +53,94 @@ async function viewData() {
     });
   }
 }
+
+/* Scheduler metadata is not evidence that a YouTube search succeeded. */
+function discoveryActivityCard(activity) {
+  if (!activity) return '';
+  const status = (entry) => ({
+    recent: t('discoveryMarkerRecent'),
+    stale: t('discoveryMarkerStale'),
+    clock_skew: t('discoveryMarkerFuture'),
+    invalid: t('discoveryMarkerInvalid'),
+    missing: t('discoveryMarkerMissing'),
+  }[entry?.state] || t('discoveryMarkerMissing'));
+  const stamp = (entry) => entry?.at ? esc(fmtDate(entry.at)) : '—';
+  return `<div class="card">
+    ${sectionHead(t('discoveryActivityTitle'), t('discoveryActivitySub'))}
+    <div class="tiles">
+      ${tile(t('discoveryDailyMarker'), stamp(activity.dailySchedulerMarker),
+              status(activity.dailySchedulerMarker))}
+      ${tile(t('discoveryTopicMarker'), stamp(activity.topicSchedulerMarker),
+              status(activity.topicSchedulerMarker))}
+      ${tile(t('discoverySearchToday'), num(activity.searchQuota.callsToday),
+              t('discoverySearchRemaining', { count: num(activity.searchQuota.callsLeft) }))}
+      ${tile(t('discoveryUnitsToday'), num(activity.unitQuota.unitsToday),
+              t('discoveryUnitsRemaining', { count: num(activity.unitQuota.unitsLeft) }))}
+    </div>
+    <div class="section-sub" style="margin-top:10px">
+      ${activity.searchQuota.callsToday === 0 ? t('discoveryNoSearchToday') + ' ' : ''}
+      ${t('discoveryEvidenceWarning')}
+    </div>
+    ${discoveryRunCard(activity.discoveryRun)}
+    ${topicSearchRunCard(activity.topicSearchRun)}
+  </div>`;
+}
+
+
+
+function discoveryRunCard(run) {
+  if (!run) return `<div class="section-sub" style="margin-top:12px">
+    ${t('discoveryRunMissing')}</div>`;
+  const time = run.recorded?.at ? esc(fmtDate(run.recorded.at)) : '—';
+  const freshness = run.recorded?.state === 'recent'
+    ? t('discoveryMarkerRecent') : t('discoveryMarkerStale');
+  return `<div class="section-sub" style="margin-top:12px">
+    ${sectionHead(t('discoveryLastRunTitle'), time + ' · ' + freshness)}
+    <div class="tiles">
+      ${tile(t('discoveryQueriesConfigured'), num(run.configuredTopics))}
+      ${tile(t('discoveryQueriesSucceeded'), num(run.successful))}
+      ${tile(t('discoveryQueriesFailed'), num(run.failed + run.invalidResults))}
+      ${tile(t('discoveryQueriesQuotaBlocked'), num(run.quotaBlocked))}
+      ${tile(t('discoveryQueriesSkipped'), num(run.skipped))}
+      ${tile(t('discoveryVideosFound'), num(run.videosFound))}
+      ${tile(t('discoveryVideosProcessed'), num(run.videosProcessed))}
+      ${tile(t('discoveryChannelProfiles'), num(run.channelProfilesReported))}
+    </div>
+    <div class="section-sub" style="margin-top:10px">
+      ${run.configuredTopics === 0 ? t('discoveryQueriesNotConfigured') + ' ' : ''}
+      ${t('discoveryOutcomeWarning')}
+    </div>
+  </div>`;
+}
+
+
+
+function topicSearchRunCard(run) {
+  if (!run) return `<div class="section-sub" style="margin-top:12px">
+    ${t('discoveryTopicRunMissing')}</div>`;
+  const time = run.recorded?.at ? esc(fmtDate(run.recorded.at)) : '—';
+  const status = run.stoppedBy
+    ? t('discoveryTopicRunQuota') : ({
+    ok: t('discoveryTopicRunOk'),
+    failed: t('discoveryTopicRunFailed'),
+    quota: t('discoveryTopicRunQuota'),
+    skipped: t('discoveryTopicRunSkipped'),
+    invalid_result: t('discoveryTopicRunInvalid'),
+  }[run.state] || t('discoveryTopicRunInvalid'));
+
+  return `<div class="section-sub" style="margin-top:14px">
+    <strong>${t('discoveryTopicRunTitle')}</strong> · ${time} · ${status}
+    <div class="tiles">
+      ${tile(t('discoveryTopicsSearched'), num(run.topicsSearched))}
+      ${tile(t('discoveryTopicNewVideos'), num(run.videosStored))}
+      ${tile(t('discoveryTopicSearchCalls'), num(run.searchCalls))}
+    </div>
+    <div class="section-sub" style="margin-top:8px">
+      ${t('discoveryTopicEvidenceWarning')}
+    </div>
+  </div>`;
+}
+
 
 /* План 30: профили расходов -- сколько стоит сделать одно видео (озвучка, монтаж,
    ИИ-генерация, стоки) и постоянные расходы в месяц. Личные: у каждого свои. */

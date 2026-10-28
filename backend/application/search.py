@@ -14,6 +14,7 @@ from application import collecting, llm_gateway, maturity_curve
 from application import discovery as trends
 from application import monetization as MON
 from application import saturation as SAT
+from domain import archive_evidence as AE
 from domain import idea_verdicts as IV
 from domain import metrics as M
 from domain import monetization as MZ
@@ -168,9 +169,13 @@ def niche_overview(niche: str, period: str = "all", top_n: int = 5) -> dict:
     rows = trends.load_window(period=period, niche=niche)
     if not rows:
         return {"niche": niche, "found": False,
-                "hint": "nothing collected under this slug yet -- run collect_niche"}
+                "hint": "nothing collected under this slug yet -- run collect_niche",
+                "evidenceQuality": AE.assess(
+                    [], last_collected_at=row_niche["last_collected_at"] if row_niche else None)}
 
     overview = _overview_from_rows(rows, top_n=top_n)
+    overview["evidenceQuality"] = AE.assess(
+        rows, last_collected_at=row_niche["last_collected_at"] if row_niche else None)
     # plan 08: a trend over its own 120-day window, whatever `period` is
     overview["saturation_v2"] = SAT.niche_saturation(niche)
     overview.update({

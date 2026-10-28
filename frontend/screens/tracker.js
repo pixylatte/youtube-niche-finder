@@ -4,8 +4,9 @@ import { view, collectForm, wireCollect, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/tracker.js';
 import en from '../i18n/en/tracker.js';
+import tr from '../i18n/tr/tracker.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ----------------------------------------------------------------- Трекер */
 

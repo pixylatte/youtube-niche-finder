@@ -1,0 +1,15 @@
+export default {
+  fieldTitle:'başlık',fieldThumbnail:'küçük resim',
+  effectNoDataTip:'Değişiklik öncesi ve sonrası 48 saat içindeki istatistiklerden en az ikişer kayıt gerekir',
+  effectNoData:'etki: yeterli veri yok',
+  effectTip:'Değişiklikten önceki ve sonraki 48 saatin saatlik izlenmeleri. Bu gözlem nedensellik değildir; videolar yaşlandıkça izlenmeler kendiliğinden azalabilir.',
+  notArchived:'arşivde yok',before:'önce',after:'sonra',
+  cardMeta:'{views} izlenme · {ago} değiştirildi',
+  title:'Kapak ve Başlık Değişimleri',
+  sub:'Yayın sonrası başlık/küçük resim değişimleri, önce ve sonra izlenmeler · {period}',
+  whatChanged:'Ne değişti?',optAll:'tümü',optTitles:'başlıklar',
+  optThumbnails:'küçük resimler',channel:'Kanal',allChannels:'tüm kanallar',
+  apply:'Uygula',
+  found:'Bulunan: <b>{count}</b> · API kotası kullanılmadı · küçük resimler yalnız takip edilen kanallar için kaydedilir',
+  empty:'Bu dönem değişiklik yok. Kanalı takibe alın; arka plan toplayıcısı küçük resim geçmişini tutmaya başlasın.',
+};

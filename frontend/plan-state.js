@@ -5,8 +5,9 @@ import { $, api } from './ui.js';
 import { dict } from './i18n.js';
 import ru from './i18n/ru/planState.js';
 import en from './i18n/en/planState.js';
+import tr from './i18n/tr/planState.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 let me = { multiUser: false, user: null, plan: null };
 
@@ -50,7 +51,11 @@ function renderPlanLine() {
   const used = me.plan.usage?.daily?.yt_units ?? 0;
   const limit = me.plan.limits?.yt_units;
   box.hidden = false;
-  box.textContent = t('planLine', { name: me.plan.plan.name, used, limit: limit == null ? '∞' : limit });
+  // Localize the stock unlimited plan only; leave user-created plan names unchanged.
+  const originalName = me.plan.plan.name;
+  const stockNames = [ru.unlimitedPlan, en.unlimitedPlan, tr.unlimitedPlan];
+  const name = stockNames.includes(originalName) ? t('unlimitedPlan') : originalName;
+  box.textContent = t('planLine', { name, used, limit: limit == null ? '∞' : limit });
 }
 
 let timer = null;

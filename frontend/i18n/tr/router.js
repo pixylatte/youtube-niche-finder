@@ -1,0 +1,18 @@
+export default {
+  overview: 'Genel Bakış', find: 'Niş Keşfi', viral: 'Viral Videolar',
+  channels: 'Öne Çıkan Kanallar', categories: 'Kategoriler', keywords: 'Anahtar Kelimeler',
+  tags: 'Kategori Etiketleri', tracker: 'Kanal Takibi', alerts: 'Bildirimler',
+  ideas: 'Fikir Analizi',
+  brainNext: 'Günlük Video Karar Merkezi', language: 'Dil Fırsatları', transcripts: 'Transkriptler',
+  clusters: 'Niş Haritası', titles: 'Başlık Analizi', saved: 'Kaydedilenler',
+  packaging: 'Kapak ve Başlık Değişimleri', metadata: 'Meta Veri Analizi',
+  calendar: 'İçerik Takvimi', niches: 'Nişler', enter: 'Niş Fırsatları',
+  own: 'Kanallarım', data: 'Veri Merkezi', help: 'Yardım', mcp: 'MCP Bağlantısı',
+  plan: 'Planım', admin: 'Yönetim', profile: 'Profil',
+  crumbChannelCompare: "Rakip Kanal Karşılaştırması",
+  crumbChannel: 'Kanal', crumbBrief: 'İçerik Özeti', crumbCompare: 'Karşılaştırma',
+  crumbNiche: 'Niş', loadFailed: 'Veriler yüklenemedi.',
+  checkService: 'Lütfen uygulamanın çalıştığını kontrol edin:',
+  notInPlan: '“{title}” bölümü mevcut planınızda bulunmuyor.',
+  changePlan: 'Planı değiştir',
+};

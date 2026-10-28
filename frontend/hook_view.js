@@ -3,8 +3,9 @@ import { esc } from './ui.js';
 import { dict, onLocaleChange } from './i18n.js';
 import ru from './i18n/ru/hookView.js';
 import en from './i18n/en/hookView.js';
+import tr from './i18n/tr/hookView.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 const LEVEL = {
   strong: ['levelStrong', 'chip-good'],

@@ -4,8 +4,21 @@ import { view } from '../shared.js';
 import { dict } from '../i18n.js';
 import ru from '../i18n/ru/compare.js';
 import en from '../i18n/en/compare.js';
+import tr from '../i18n/tr/compare.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
+
+function observationLine(v) {
+  const item = v.observationReadiness;
+  if (!item) return esc(t('observationUnknown'));
+  const interval = item.observedFirstDayRate;
+  if (!interval) return esc(t('observationLimited'));
+  return esc(t('observationMeasured', {
+    start: interval.fromHours,
+    end: interval.toHours,
+    rate: interval.viewsPerHour,
+  }));
+}
 
 /* ------------------------------------------- Сравнение траекторий (план 20) */
 
@@ -39,6 +52,7 @@ async function viewCompare(arg) {
           <div class="row-title"><a href="https://www.youtube.com/watch?v=${esc(v.videoId)}" target="_blank" rel="noopener">${esc(v.title || v.videoId)}</a></div>
           <div class="row-sub">${v.channelId ? `<a href="#/channel/${esc(v.channelId)}">${esc(v.channelTitle || v.channelId)}</a> · ` : ''}${t('views', { views: num(v.views) })}
             · ${t('snapshots', { snaps: num(v.points.length) })}${v.baselineMedianViews ? ` · ${t('channelMedian', { median: num(v.baselineMedianViews) })}` : ''}</div>
+          <div class="row-sub">${observationLine(v)}</div>
         </div>
         <a class="btn btn-ghost btn-sm" href="${without(v.videoId)}">${t('remove')}</a>
       </div>`).join('')}</div>

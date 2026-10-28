@@ -4,8 +4,9 @@ import { view } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
 import ru from '../i18n/ru/mcp.js';
 import en from '../i18n/en/mcp.js';
+import tr from '../i18n/tr/mcp.js';
 
-const t = dict({ ru, en });
+const t = dict({ ru, en, tr });
 
 /* ---------------------------------------------------------------- MCP */
 

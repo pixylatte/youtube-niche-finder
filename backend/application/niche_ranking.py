@@ -63,8 +63,11 @@ def _compute() -> dict:
     conn = db.get_conn()
     try:
         niches = {r["slug"]: dict(r) for r in conn.execute(
-            "SELECT n.slug, n.label, COUNT(vn.video_id) AS video_count FROM niches n "
-            "LEFT JOIN video_niches vn ON vn.niche_slug = n.slug GROUP BY n.slug, n.label").fetchall()}
+            "SELECT n.slug, n.label, COUNT(vn.video_id) AS video_count, "
+            "COUNT(DISTINCT v.channel_id) AS channel_count FROM niches n "
+            "LEFT JOIN video_niches vn ON vn.niche_slug = n.slug "
+            "LEFT JOIN videos v ON v.video_id = vn.video_id "
+            "GROUP BY n.slug, n.label").fetchall()}
         members = {s: set() for s in niches}
         for r in conn.execute("SELECT video_id, niche_slug FROM video_niches").fetchall():
             if r["video_id"] in ids and r["niche_slug"] in members:
@@ -82,6 +85,7 @@ def _compute() -> dict:
                    "rpmMid": rpm, "templateShare": _template_share(slug),
                    "policyShare": _policy_share(slug)}
         out.append({"niche": slug, "label": info["label"], "videos": info["video_count"],
+                    "channels": info["channel_count"],
                     "status": s["status"], "confidence": s["confidence"], "format": s["format"],
                     "recentVideos": s["counts"]["recent"], "categoryId": category,
                     "metrics": metrics, **R.score(metrics)})
