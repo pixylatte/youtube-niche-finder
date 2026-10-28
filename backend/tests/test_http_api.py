@@ -652,3 +652,28 @@ def test_discovery_activity_endpoint_includes_last_worker_query_outcomes(monkeyp
     assert result["workerRunningVerified"] is False
     assert result["discoverySuccessVerified"] is False
 
+
+def test_daily_decisions_route_is_quota_free_and_bounded(monkeypatch):
+    seen = []
+
+    def fake_decisions(profile, period, limit):
+        seen.append((profile, period, limit))
+        return {"profile": profile, "status": "insufficient-data", "candidates": [],
+                "youtubeQuotaUsed": 0}
+
+    monkeypatch.setattr(api.DAILY, "daily_decisions", fake_decisions)
+    response = client.get("/api/daily-decisions?profile=islam&period=90d&limit=3")
+    assert response.status_code == 200
+    assert response.json()["profile"] == "islam"
+    assert response.json()["youtubeQuotaUsed"] == 0
+    assert seen == [("islam", "90d", 3)]
+
+
+def test_daily_decisions_route_rejects_invalid_profiles(monkeypatch):
+    def bad_input(profile, period, limit):
+        raise ValueError("profile must be kayip or islam")
+
+    monkeypatch.setattr(api.DAILY, "daily_decisions", bad_input)
+    response = client.get("/api/daily-decisions?profile=unknown")
+    assert response.status_code == 400
+    assert "profile" in response.json()["detail"]
