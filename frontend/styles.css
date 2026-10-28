@@ -757,3 +757,63 @@ select, input[type="text"], input[type="number"], input[type="email"], input[typ
 @media (prefers-reduced-motion: reduce) {
   .nav-group-title::after { transition: none; }
 }
+
+/* YouTube Brain — archive evidence transparency. No artificial score colors. */
+.coverage-card { display: grid; gap: 13px; }
+.coverage-card .section-head { margin-bottom: 0; }
+.coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.coverage-item {
+  min-width: 0;
+  padding: 14px 15px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.coverage-item-label {
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 680;
+  color: var(--ink-2);
+}
+.coverage-item-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  padding-top: 8px;
+}
+.coverage-item-value strong {
+  font-size: 23px;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.coverage-percent { color: var(--muted); font-size: 12px; font-weight: 650; }
+.coverage-item progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 10px;
+  border: 0;
+  accent-color: var(--series-1);
+}
+.coverage-item-note { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.coverage-advice {
+  border-inline-start: 3px solid var(--series-1);
+  padding: 9px 13px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+@media (max-width: 1150px) {
+  .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 550px) {
+  .coverage-grid { grid-template-columns: minmax(0, 1fr); }
+}
