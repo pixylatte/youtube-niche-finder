@@ -9,7 +9,7 @@ fail() { printf 'UI V2 RELEASE BLOCKED: %s\n' "$1" >&2; exit 1; }
 for sha in "$TARGET" "$PREVIOUS" "$BASE"; do
   [[ "$sha" =~ ^[a-f0-9]{40}$ ]] || fail "Expected three full pinned Git commit SHAs"
 done
-for cmd in git tar curl mktemp python3 cp; do command -v "$cmd" >/dev/null || fail "Missing command $cmd"; done
+for cmd in git tar curl mktemp python3 cp find grep date; do command -v "$cmd" >/dev/null || fail "Missing command $cmd"; done
 [[ -d "$APP/.git" && -d "$APP/frontend" && -w "$APP/frontend" ]] || fail "Expected writable production checkout missing"
 [[ "$(git -C "$APP" rev-parse HEAD)" == "$BASE" ]] || fail "Repository base is not the reviewed version"
 [[ "$(git -C "$APP" rev-parse FETCH_HEAD)" == "$TARGET" ]] || fail "Fetched commit does not match target"
@@ -45,7 +45,11 @@ for p in previous.rglob("*"):
     current = live / relative
     if p.is_symlink() or not (p.is_dir() or p.is_file()):
         raise SystemExit("UI V2 RELEASE BLOCKED: prior release has an unsafe path")
-    if p.is_file() and (not current.is_file() or current.is_symlink() or
+    if current.is_symlink():
+        raise SystemExit("UI V2 RELEASE BLOCKED: symlink in current frontend: " + str(relative))
+    if p.is_dir() and not current.is_dir():
+        raise SystemExit("UI V2 RELEASE BLOCKED: missing directory: " + str(relative))
+    if p.is_file() and (not current.is_file() or
                         not filecmp.cmp(p, current, shallow=False)):
         raise SystemExit("UI V2 RELEASE BLOCKED: live frontend differs from v1: " + str(relative))
 for p in target.rglob("*"):
