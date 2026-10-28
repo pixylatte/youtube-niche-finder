@@ -4,6 +4,7 @@
  */
 import { $, api, esc, toast, state } from '../ui.js';
 import { view } from '../shared.js';
+import { wireEditorialWorkbench } from '../editorial-workbench.js';
 
 const CHANNELS = {
   kayip: {
@@ -141,7 +142,13 @@ function autoDecisionsHtml(result) {
       <strong><a href="${href}" target="_blank" rel="noopener noreferrer">
         ${esc(r.referenceTitle)}</a></strong>
       <p class="section-sub">${esc(metric + movement)} · ${Number(r.views) || 0} izlenme</p>
+      <p class="section-sub">Rakip kapsamı (yalnız bu arşiv örneklemi):
+        ${Number(r.competitionEvidence?.sampleVideos) || 0} video /
+        ${Number(r.competitionEvidence?.sampleChannels) || 0} kanal.
+        Bu sayı genel YouTube rekabeti değildir.</p>
       <p class="section-sub">Araştırma referansı; kaynak videonun başlığını veya içeriğini kopyalama.</p>
+      <button type="button" class="btn btn-ghost bn-editorial-open"
+        data-video-id="${id}">Özgün fikir ve kaynak kontrolü</button>
       <a href="#/brief/${encodeURIComponent(id)}">Referansın araştırma özetini aç</a>
     </div>`;
   }).join('');
@@ -203,7 +210,9 @@ async function viewBrainNext() {
       YouTube API'den yeni veri çekmez. Fikirlerin doğrulanması için ilgili niş ve rakip verisinin toplanması gerekir.</p>
   </div>
   ${autoDecisionsHtml(recommended)}
+  <div id="bnEditorialPanel"></div>
   ${resultsHtml(key, niche)}`;
+  wireEditorialWorkbench(view, recommended?.candidates || [], key);
 
   $('#bnChannel').addEventListener('change', (event) => {
     drafts[channel] = $('#bnIdeas').value;
