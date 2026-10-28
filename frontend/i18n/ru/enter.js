@@ -1,4 +1,9 @@
 export default {
+  evidenceLine: "{videos} видео · {channels} каналов · {recent} видео за 30 дней",
+  evidenceWeight: "Вес известных компонентов: {pct}%",
+  evidenceWeightTip: "Доля веса шести компонентов рейтинга с известными значениями. Не статистическая уверенность, не достаточность выборки и не вероятность успеха.",
+  rowRecentVideos: "Опубликовано за 30 дней",
+  rowKnownWeight: "Вес известных компонентов",
   termDemand: 'Спрос',
   termSupply: 'Предложение',
   termNewcomers: 'Новички',
