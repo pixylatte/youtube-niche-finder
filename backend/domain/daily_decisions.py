@@ -110,6 +110,7 @@ def rank(profile, period, limit, niches, videos):
     """Turn a bounded local corpus into distinct-channel reference leads."""
     validate(profile, period, limit)
     unique = {}
+    observed_ids = set()
     allowed_niches = {row["slug"] for row in niches}
     expected_short = PROFILES[profile]["only_shorts"]
     for video in videos:
@@ -119,6 +120,8 @@ def rank(profile, period, limit, niches, videos):
             continue
         if video.get("isShort") is not expected_short:
             continue
+        if isinstance(video.get("videoId"), str) and VIDEO_ID.fullmatch(video["videoId"]):
+            observed_ids.add(video["videoId"])
         candidate = _candidate(video)
         if not candidate:
             continue
@@ -159,7 +162,7 @@ def rank(profile, period, limit, niches, videos):
         "period": period, "format": "shorts" if PROFILES[profile]["only_shorts"] else "long",
         "status": state, "insufficientReason": reason,
         "relatedNiches": len(niches),
-        "sampleVideos": len({v.get("videoId") for v in videos}),
+        "sampleVideos": len(observed_ids),
         "qualifiedVideoReferences": len(unique),
         "selectedDistinctChannels": len(selected),
         "candidates": selected,
