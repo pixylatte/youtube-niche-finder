@@ -5,9 +5,9 @@ from *supported evidence*. Here it is adapted to Niche Finder's own cached
 niche rows and `niches.last_collected_at`; no legacy data or migrations are
 copied. It never changes rankings, calls YouTube, or validates source claims.
 """
-from datetime import datetime, timezone
 import math
 import re
+from datetime import datetime, timezone
 
 VIDEO_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 DAY_SECONDS = 86400
