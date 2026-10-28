@@ -20,12 +20,17 @@ def _point(row):
     return (float(age), views)
 
 
-def assess(points):
+def assess(points, *, comparability_break=False):
     if not isinstance(points, list):
         return {"status": "unavailable", "reason": "invalid-observation-input",
                 "snapshotCount": None, "observedFirstDayRate": None,
                 "quotaUsed": 0}
-    valid = sorted({_point(row) for row in points if _point(row) is not None})
+    seen = []
+    for item in points:
+        parsed = _point(item)
+        if parsed is not None:
+            seen.append(parsed)
+    valid = sorted(set(seen))
     if not valid:
         return {"status": "insufficient", "reason": "no-observed-snapshots",
                 "snapshotCount": 0, "firstObservedHours": None,
@@ -34,7 +39,7 @@ def assess(points):
 
     first_day = [p for p in valid if p[0] <= 24]
     interval = None
-    if len(first_day) >= 2:
+    if len(first_day) >= 2 and not comparability_break:
         first, last = first_day[0], first_day[-1]
         hours = last[0] - first[0]
         delta = last[1] - first[1]
@@ -49,6 +54,7 @@ def assess(points):
     return {
         "status": "observed-interval" if interval else "limited",
         "reason": (None if interval else
+                   "view-count-definition-change" if comparability_break else
                    "first-day-delta-unavailable-or-not-monotonic"),
         "snapshotCount": len(valid),
         "firstObservedHours": valid[0][0],
