@@ -658,6 +658,7 @@ def discovery_activity():
             daily_marker=db.get_meta(conn, "worker_last_daily"),
             topic_marker=db.get_meta(conn, "worker_last_topic_search"),
             run_record=db.get_meta(conn, "worker_discovery_last_run"),
+            topic_run_record=db.get_meta(conn, "worker_topic_search_last_result"),
             calls_today=collector.search_calls_today(conn),
             search_limit=yt.SEARCH_DAILY_CALL_LIMIT,
             units_today=collector.units_today(conn),
