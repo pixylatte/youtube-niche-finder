@@ -53,8 +53,8 @@ function renderPlanLine() {
   box.hidden = false;
   // Localize the stock unlimited plan only; leave user-created plan names unchanged.
   const originalName = me.plan.plan.name;
-  const name = ['Без ограничений', 'Unlimited', 'Sınırsız'].includes(originalName)
-    ? t('unlimitedPlan') : originalName;
+  const stockNames = [ru.unlimitedPlan, en.unlimitedPlan, tr.unlimitedPlan];
+  const name = stockNames.includes(originalName) ? t('unlimitedPlan') : originalName;
   box.textContent = t('planLine', { name, used, limit: limit == null ? '∞' : limit });
 }
 
