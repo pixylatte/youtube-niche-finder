@@ -106,6 +106,9 @@ function rivalFormatReport(representatives, responses) {
     unknown: ['formatUnknown', ''],
   };
   const count = (n) => n == null ? '—' : num(n);
+  const multiplier = (n) => new Intl.NumberFormat(document.documentElement.lang || 'tr', {
+    maximumFractionDigits: 2,
+  }).format(n);
   const cards = representatives.map((source, i) => {
     if (!source.videoId) return `<article class="rival-format-entry">
       <h3>${esc(source.channelTitle)}</h3>
@@ -129,7 +132,7 @@ function rivalFormatReport(representatives, responses) {
         `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(m.videoId)}"
             target="_blank" rel="noopener">${esc(m.title)}</a>
           ${m.channelTitle ? `<span>${esc(m.channelTitle)}</span>` : ''}
-          ${m.outlierScore != null ? `<span>×${num(m.outlierScore)}</span>` : ''}
+          ${m.outlierScore != null ? `<span>×${multiplier(m.outlierScore)}</span>` : ''}
         </li>`).join('')}</ul>` : '';
     return `<article class="rival-format-entry">
       <h3>${esc(source.channelTitle)}</h3>
@@ -138,7 +141,7 @@ function rivalFormatReport(representatives, responses) {
       <div class="rival-format-topline">
         <span class="chip ${cls}">${esc(t(label))}</span>
         ${source.outlierScore != null
-          ? `<span class="section-sub">${esc(t('formatSourceMultiplier', { x: source.outlierScore }))}</span>` : ''}
+          ? `<span class="section-sub">${esc(t('formatSourceMultiplier', { x: multiplier(source.outlierScore) }))}</span>` : ''}
       </div>
       <p class="rival-format-note">${esc(detail)}</p>
       ${examples}
