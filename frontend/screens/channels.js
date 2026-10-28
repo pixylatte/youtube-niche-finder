@@ -3,6 +3,7 @@ import { $, api, q, num, esc, sectionHead, empty, channelRow, state, yppSelect, 
 import { view, plabel, base, render } from '../shared.js';
 import { dict } from '../i18n.js';
 import { rivalSnapshot, parseRivalBasket } from '../rival-workbench.js';
+import { representativeVideos, repeatabilityEvidence } from '../rival-formats.js';
 import ru from '../i18n/ru/channels.js';
 import en from '../i18n/en/channels.js';
 import tr from '../i18n/tr/channels.js';
@@ -45,6 +46,8 @@ function rivalComparisonCard(ids, results) {
     return { id: ids[i], data };
   });
   const missing = resolved.filter((r) => !r.data).length;
+  const representatives = representativeVideos(ids, results);
+  const reviewable = representatives.filter((item) => item.videoId).length;
   const period = plabel(state.period);
   const columns = [
     { label: t('compareMetric'), wrap: true, render: (r) => esc(r.label) },
@@ -82,7 +85,71 @@ function rivalComparisonCard(ids, results) {
     <p class="rival-caveat">${esc(t('compareCaveat'))}</p>
     <div class="rival-profile-links">${resolved.map(({ id, data }) =>
       `<a class="btn btn-ghost btn-sm" href="#/channel/${encodeURIComponent(id)}">${esc(data?.title || id)}</a>`).join('')}</div>
+    <div class="rival-format-actions">
+      <div class="section-sub">${esc(t('formatReviewSub'))}</div>
+      <button class="btn btn-ghost" type="button" id="rivalFormatsBtn"
+        ${reviewable ? '' : 'disabled'}>${esc(t('formatReviewAction', { n: reviewable }))}</button>
+    </div>
+    <div id="rivalFormatResults" aria-live="polite"></div>
   </div>`;
+}
+
+/* Repeatability verdicts come from the existing domain/repeatability.py:
+   >=5 matched videos from >=3 OTHER channels; "repeatable" requires
+   >=3 independent channels with an outlier >=x2. Source samples only the
+   strongest LONG video from each compared channel. No score extrapolation. */
+function rivalFormatReport(representatives, responses) {
+  const formatLabels = {
+    repeatable: ['formatRepeatable', 'chip-good'],
+    mixed: ['formatMixed', 'chip-warn'],
+    one_off: ['formatOneOff', ''],
+    unknown: ['formatUnknown', ''],
+  };
+  const count = (n) => n == null ? '—' : num(n);
+  const cards = representatives.map((source, i) => {
+    if (!source.videoId) return \`<article class="rival-format-entry">
+      <h3>\${esc(source.channelTitle)}</h3>
+      <p class="rival-format-note">\${esc(t('formatNoSource'))}</p>
+    </article>\`;
+    const result = responses[i];
+    const hasResult = result?.status === 'fulfilled';
+    const facts = hasResult ? repeatabilityEvidence(result.value) : null;
+    const [label, cls] = facts
+      ? formatLabels[facts.verdict] : ['formatError', ''];
+    const detail = facts?.reason === 'no-embedding' ? t('formatNoVectors')
+      : facts?.verdict === 'unknown' ? t('formatInsufficient')
+      : facts ? t('formatEvidenceLine', {
+        hit: count(facts.hitChannels),
+        channels: count(facts.independentChannels),
+        videos: count(facts.similarVideos),
+      }) : t('formatRequestFailed');
+    const examples = facts?.examples?.length
+      ? \`<ul class="rival-format-examples">\${facts.examples.map((m) =>
+        \`<li><a href="https://www.youtube.com/watch?v=\${encodeURIComponent(m.videoId)}"
+            target="_blank" rel="noopener">\${esc(m.title)}</a>
+          \${m.channelTitle ? \`<span>\${esc(m.channelTitle)}</span>\` : ''}
+          \${m.outlierScore != null ? \`<span>×\${num(m.outlierScore)}</span>\` : ''}
+        </li>\`).join('')}</ul>\` : '';
+    return \`<article class="rival-format-entry">
+      <h3>\${esc(source.channelTitle)}</h3>
+      <a class="rival-format-source" href="https://www.youtube.com/watch?v=\${encodeURIComponent(source.videoId)}"
+        target="_blank" rel="noopener">\${esc(source.title || source.videoId)}</a>
+      <div class="rival-format-topline">
+        <span class="chip \${cls}">\${esc(t(label))}</span>
+        \${source.outlierScore != null
+          ? \`<span class="section-sub">\${esc(t('formatSourceMultiplier', { x: source.outlierScore }))}</span>\` : ''}
+      </div>
+      <p class="rival-format-note">\${esc(detail)}</p>
+      \${examples}
+      <a class="btn btn-ghost btn-sm" href="#/brief/\${encodeURIComponent(source.videoId)}">
+        \${esc(t('formatOpenBrief'))}</a>
+    </article>\`;
+  });
+  return \`<div class="rival-format-report">
+    \${sectionHead(t('formatReportTitle'), t('formatReportSub'))}
+    <div class="rival-format-grid">\${cards.join('')}</div>
+    <p class="rival-caveat">\${esc(t('formatCaveat'))}</p>
+  </div>\`;
 }
 
 /* --------------------------------------------------------- Outlier-каналы */
@@ -177,6 +244,44 @@ async function viewChannels() {
       if (target.isConnected && ids.join(',') === getRivals().join(',')) {
         target.innerHTML = rivalComparisonCard(ids, results);
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const formatButton = target.querySelector('#rivalFormatsBtn');
+        formatButton?.addEventListener('click', async () => {
+          const examples = representativeVideos(ids, results);
+          const report = target.querySelector('#rivalFormatResults');
+          if (!report) return;
+          formatButton.disabled = true;
+          const evaluations = [];
+          let processed = 0;
+          const total = examples.filter((source) => source.videoId).length;
+          try {
+            for (const source of examples) {
+              if (!source.videoId) {
+                evaluations.push(null);
+                continue;
+              }
+              if (!report.isConnected || ids.join(',') !== getRivals().join(',')) return;
+              report.textContent = t('formatProgress', { processed, total });
+              try {
+                // Read-only local analysis: other channels across our WHOLE archive.
+                // Sequential on purpose: cap expensive embedding/DB evaluations.
+                const data = await api(\`/api/videos/\${encodeURIComponent(source.videoId)}/repeatability\`);
+                evaluations.push({ status: 'fulfilled', value: data });
+              } catch (error) {
+                evaluations.push({ status: 'rejected', reason: error });
+              }
+              processed++;
+            }
+            if (report.isConnected && ids.join(',') === getRivals().join(',')) {
+              report.innerHTML = rivalFormatReport(examples, evaluations);
+              report.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          } finally {
+            if (formatButton.isConnected) {
+              formatButton.disabled = false;
+              formatButton.textContent = t('formatReviewAgain');
+            }
+          }
+        });
       }
     } finally {
       if (button.isConnected) {
