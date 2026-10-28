@@ -18,7 +18,7 @@ PROFILES = {
     },
     "islam": {
         "name": "1 Dakika İslam",
-        "prefix": "1-dakika-i-slam",
+        "prefix": "1-dakika-islam",
         "only_shorts": True,
         "verification": "quran-hadith-and-scholarly-verification-required",
     },
@@ -101,7 +101,8 @@ def _candidate(video):
                      else "single-observation-or-missing-velocity"),
         "_priority": (1 if outlier is not None and outlier >= 1.5 else 0,
                       min(outlier or 0, 50), min(relative or 0, 100),
-                      min(vph or 0, 10000), min(views, 10000000)),
+                      min(vph if snapshot_count >= 2 and vph is not None else 0, 10000),
+                      min(views, 10000000)),
     }
 
 
@@ -109,12 +110,18 @@ def rank(profile, period, limit, niches, videos):
     """Turn a bounded local corpus into distinct-channel reference leads."""
     validate(profile, period, limit)
     unique = {}
-    candidate_count = 0
+    allowed_niches = {row["slug"] for row in niches}
+    expected_short = PROFILES[profile]["only_shorts"]
     for video in videos:
+        # Defensive boundary: never mix evidence across channel workspaces,
+        # even if the application caller accidentally passes unfiltered rows.
+        if video.get("nicheSlug") not in allowed_niches:
+            continue
+        if video.get("isShort") is not expected_short:
+            continue
         candidate = _candidate(video)
         if not candidate:
             continue
-        candidate_count += 1
         key = candidate["videoId"]
         if key not in unique or candidate["_priority"] > unique[key]["_priority"]:
             unique[key] = candidate
