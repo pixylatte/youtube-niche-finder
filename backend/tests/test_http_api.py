@@ -615,3 +615,40 @@ def test_discovery_activity_reads_only_local_scheduler_metadata(monkeypatch):
     assert result["topicSchedulerMarker"]["state"] == "missing"
     assert result["discoverySuccessVerified"] is False
 
+def test_discovery_activity_endpoint_includes_last_worker_query_outcomes(monkeypatch):
+    """Record is read locally; no worker activity or real network is invoked."""
+    import json
+    from datetime import datetime, timezone
+
+    from application.discovery_activity import build_run
+
+    class Conn:
+        def close(self):
+            self.closed = True
+
+    conn = Conn()
+    conn.closed = False
+    run = build_run(
+        [{"status": "ok", "videos_found": 8, "videos_stored": 7,
+          "channels_stored": 4}], 1, now=datetime.now(timezone.utc))
+    from application.discovery_activity import build_topic_result
+    topic = build_topic_result("ok", {
+        "topicsSearched": 2, "videosStored": 4,
+        "searchCalls": 2, "stoppedBy": None, "skippedUsers": [],
+    }, now=datetime.now(timezone.utc))
+    data = {
+        "worker_discovery_last_run": json.dumps(run),
+        "worker_topic_search_last_result": json.dumps(topic),
+    }
+    monkeypatch.setattr(api.db, "get_conn", lambda: conn)
+    monkeypatch.setattr(api.db, "get_meta", lambda c, key: data.get(key))
+    monkeypatch.setattr(api.collector, "search_calls_today", lambda c: 2)
+    monkeypatch.setattr(api.collector, "units_today", lambda c: 8)
+    result = api.discovery_activity()
+    assert conn.closed
+    assert result["discoveryRun"]["videosFound"] == 8
+    assert result["discoveryRun"]["successful"] == 1
+    assert result["topicSearchRun"]["videosStored"] == 4
+    assert result["workerRunningVerified"] is False
+    assert result["discoverySuccessVerified"] is False
+

@@ -39,6 +39,7 @@ from application import audit as audit_mod
 from application import collecting as collector
 from application import content_calendar as calendar_mod
 from application import digest as digest_mod
+from application import discovery_activity as discovery_activity_mod
 from application import enrichment as enrich_mod
 from application import freshness as freshness_mod
 from application import maturity_curve as curve_mod
@@ -204,8 +205,9 @@ def _record_step(name, outcome, seconds):
         log(f"{name}: could not record the step ({type(e).__name__})")
 
 
-def _safe(name, fn):
+def _safe(name, fn, capture=None):
     started, outcome = time.monotonic(), "failed"
+    result = None
     try:
         result = fn()
         log(f"{name}: {result}")
@@ -222,6 +224,11 @@ def _safe(name, fn):
                                      f"worker step '{name}' failed: {type(e).__name__}: {str(e)[:300]}")
         return None
     finally:
+        if capture is not None:
+            capture["outcome"] = outcome
+            # Store only the returned mapping in process memory; persistent
+            # activity records are aggregates without source data or queries.
+            capture["result"] = result if isinstance(result, dict) else None
         _record_step(name, outcome, time.monotonic() - started)
 
 
@@ -275,13 +282,30 @@ def cycle():
         if DO_TRENDING:
             _safe("trending charts", lambda: collector.collect_trending(
                 API_KEY, regions=tuple(REGIONS), category_ids=(None,), pages=2))
-        if QUERIES and _search_quota_blocked_today():
-            log("collect queries: skipped, search.list quota already exhausted "
-                "today (resets at midnight Pacific Time)")
-        else:
-            for query in QUERIES:
-                _safe(f"collect '{query}'", lambda query=query: collector.collect_niche(
-                    API_KEY, query, period=QUERY_PERIOD, pages=QUERY_PAGES, embed=True))
+        # Record the actual collector outcomes, not merely that the daily
+        # timer fired. One summary per batch, never the raw queries or videos.
+        query_outcomes = []
+        for query in QUERIES:
+            if _search_quota_blocked_today():
+                log("collect queries: skipped due to today's search quota block")
+                query_outcomes.append({"status": "skipped"})
+                continue
+            capture = {}
+            result = _safe(f"collect '{query}'", lambda query=query: collector.collect_niche(
+                API_KEY, query, period=QUERY_PERIOD, pages=QUERY_PAGES, embed=True),
+                capture=capture)
+            status = capture.get("outcome", "failed")
+            if status == "ok" and not isinstance(result, dict):
+                status = "invalid_result"
+            query_outcomes.append({"status": status, **({
+                field: result.get(field, 0)
+                for field in ("videos_found", "videos_stored", "channels_stored")
+            } if status == "ok" else {})})
+        try:
+            summary = discovery_activity_mod.build_run(query_outcomes, len(QUERIES))
+            _set_meta("worker_discovery_last_run", json.dumps(summary))
+        except Exception as e:
+            log(f"discovery activity: summary unavailable ({type(e).__name__})")
         _safe("plan expiry", lambda: plans_mod.expire_due())
         # P1-07: entries older than NF_AUDIT_RETENTION_DAYS leave the action log
         _safe("audit log retention", lambda: audit_mod.purge_expired())
@@ -309,12 +333,23 @@ def cycle():
         _mark("thumb_embed")
 
     if DO_TOPIC_SEARCH and _due("topic_search", TOPIC_SEARCH_INTERVAL_MIN):
-        # each topic is searched once a day at most (topic_watch.SEARCH_EVERY_HOURS);
-        # running every few hours just picks up topics as they fall due
+        # These opted-in topics are different from WORKER_QUERIES. They have
+        # their own completed result record and may discover *new* video ids.
         if _search_quota_blocked_today():
             log("topic search: skipped, search.list quota already exhausted today")
+            status, result = "skipped", None
         else:
-            _safe("topic search", lambda: topic_mod.search_topics(API_KEY))
+            capture = {}
+            result = _safe("topic search", lambda: topic_mod.search_topics(API_KEY),
+                           capture=capture)
+            status = capture.get("outcome", "failed")
+            if status == "ok" and not isinstance(result, dict):
+                status = "invalid_result"
+        try:
+            outcome = discovery_activity_mod.build_topic_result(status, result)
+            _set_meta("worker_topic_search_last_result", json.dumps(outcome))
+        except Exception as e:
+            log(f"topic search activity: summary unavailable ({type(e).__name__})")
         _mark("topic_search")
 
     if DO_FRESHNESS and _due("freshness", FRESHNESS_INTERVAL_MIN):

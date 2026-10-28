@@ -81,6 +81,63 @@ function discoveryActivityCard(activity) {
       ${activity.searchQuota.callsToday === 0 ? t('discoveryNoSearchToday') + ' ' : ''}
       ${t('discoveryEvidenceWarning')}
     </div>
+    ${discoveryRunCard(activity.discoveryRun)}
+    ${topicSearchRunCard(activity.topicSearchRun)}
+  </div>`;
+}
+
+
+
+function discoveryRunCard(run) {
+  if (!run) return `<div class="section-sub" style="margin-top:12px">
+    ${t('discoveryRunMissing')}</div>`;
+  const time = run.recorded?.at ? esc(fmtDate(run.recorded.at)) : '—';
+  const freshness = run.recorded?.state === 'recent'
+    ? t('discoveryMarkerRecent') : t('discoveryMarkerStale');
+  return `<div class="section-sub" style="margin-top:12px">
+    ${sectionHead(t('discoveryLastRunTitle'), time + ' · ' + freshness)}
+    <div class="tiles">
+      ${tile(t('discoveryQueriesConfigured'), num(run.configuredTopics))}
+      ${tile(t('discoveryQueriesSucceeded'), num(run.successful))}
+      ${tile(t('discoveryQueriesFailed'), num(run.failed + run.invalidResults))}
+      ${tile(t('discoveryQueriesQuotaBlocked'), num(run.quotaBlocked))}
+      ${tile(t('discoveryQueriesSkipped'), num(run.skipped))}
+      ${tile(t('discoveryVideosFound'), num(run.videosFound))}
+      ${tile(t('discoveryVideosProcessed'), num(run.videosProcessed))}
+      ${tile(t('discoveryChannelProfiles'), num(run.channelProfilesReported))}
+    </div>
+    <div class="section-sub" style="margin-top:10px">
+      ${run.configuredTopics === 0 ? t('discoveryQueriesNotConfigured') + ' ' : ''}
+      ${t('discoveryOutcomeWarning')}
+    </div>
+  </div>`;
+}
+
+
+
+function topicSearchRunCard(run) {
+  if (!run) return `<div class="section-sub" style="margin-top:12px">
+    ${t('discoveryTopicRunMissing')}</div>`;
+  const time = run.recorded?.at ? esc(fmtDate(run.recorded.at)) : '—';
+  const status = run.stoppedBy
+    ? t('discoveryTopicRunQuota') : ({
+    ok: t('discoveryTopicRunOk'),
+    failed: t('discoveryTopicRunFailed'),
+    quota: t('discoveryTopicRunQuota'),
+    skipped: t('discoveryTopicRunSkipped'),
+    invalid_result: t('discoveryTopicRunInvalid'),
+  }[run.state] || t('discoveryTopicRunInvalid'));
+
+  return `<div class="section-sub" style="margin-top:14px">
+    <strong>${t('discoveryTopicRunTitle')}</strong> · ${time} · ${status}
+    <div class="tiles">
+      ${tile(t('discoveryTopicsSearched'), num(run.topicsSearched))}
+      ${tile(t('discoveryTopicNewVideos'), num(run.videosStored))}
+      ${tile(t('discoveryTopicSearchCalls'), num(run.searchCalls))}
+    </div>
+    <div class="section-sub" style="margin-top:8px">
+      ${t('discoveryTopicEvidenceWarning')}
+    </div>
   </div>`;
 }
 
