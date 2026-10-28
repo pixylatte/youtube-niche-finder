@@ -43,6 +43,7 @@ GROUPS = [
 SUMMARY = {
     "GET /api/health": ("status", "Backend status: database counts, whether the YouTube key is set, remaining search calls and units today."),
     "GET /api/discovery-activity": ("status", "Read-only worker scheduler markers and separate search/unit counters; never proof of discovery success."),
+    "GET /api/daily-decisions": ("status", "Two editorial workspaces: local-archive video research references and evidence gaps; no YouTube or LLM quota."),
     "GET /api/stats": ("status", "What is in the database right now (same numbers as the `db_stats` tool)."),
     "GET /api/coverage": ("status", "Whether the database has enough data for a period (videos in the window, with a category, with snapshots) -- call it when a section comes back empty."),
     "GET /api/overview": ("status", "Everything the Overview screen needs in one request (viral videos, outlier channels, categories, keywords, competition)."),
