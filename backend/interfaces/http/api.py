@@ -44,9 +44,9 @@ from application import collabs as CLB
 from application import collecting as collector
 from application import content_calendar as CAL
 from application import content_gaps as CG
+from application import daily_decisions as DAILY
 from application import digest as DG
 from application import discovery as trends
-from application import daily_decisions as DAILY
 from application import discovery_activity as DA
 from application import enrichment as EN
 from application import hook_score as HK
