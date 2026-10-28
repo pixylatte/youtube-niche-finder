@@ -890,6 +890,14 @@ def test_v13_editorial_review_not_a_publication_approval(browser, base_url):
         page.get_by_text("İnsan editör incelemesine hazırlanmış").wait_for()
         assert "Bu bir yayın onayı değildir." in page.locator(
             "#bnEditorialOutcome").inner_text()
+        page.get_by_role("button",
+                         name="Seslendirme ve sahne üretim taslağını oluştur").click()
+        page.get_by_text("Video Üretim Taslağı — v14").wait_for()
+        production = page.locator("#bnProductionResult").inner_text()
+        assert "Kendi sesinle kayıt ve kurgu akışı" in production
+        assert "Sahne storyboard iskeleti" in production
+        assert "Yayın onayı: Yok" in production
+        assert "AI senaryo üretimi: Yok" in production
     finally:
         page.context.close()
 
