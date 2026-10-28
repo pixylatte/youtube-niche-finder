@@ -20,7 +20,7 @@ videoların başlığını kullanmak ya da taklit etmek önerilmez.
 - Otomatik araştırma: \`GET /api/daily-decisions?profile=kayip&period=30d&limit=5\`.
 - Dönemler \`7d\`, \`30d\`, \`90d\` ile; öneri sayısı 1–8 ile sınırlıdır.
 - İlk profil yalnız \`kayıp-sayfalar\` niş önekinden uzun video,
-  ikinci profil yalnız \`1-dakika-i-slam\` niş önekinden Shorts referansı alır.
+  ikinci profil yalnız \`1-dakika-islam\` niş önekinden Shorts referansı alır.
   Bu etiketler, önceki araştırma arşivinde bizim kullandığımız etiketlerdir.
   Yanlış veya eksik etiketli içerikler bu sürümde kendiliğinden keşfedilmez.
 - Adaylar yayın tarihi penceresinden, en az 200 izlenme ve ya kanal bazına
