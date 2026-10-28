@@ -115,3 +115,18 @@ def test_source_full_urls_are_not_reflected_in_review_response():
     assert "private-editorial-note" not in str(result)
     assert "arsiv.gov.tr" not in str(result)
     assert result["submittedSources"] == 2
+
+def test_tiny_title_suffix_is_not_counted_as_distinct_editorial_angle():
+    payload = review()
+    payload["angle"] = payload["referenceTitle"] + " hakkında kısa analiz yaz"
+    result = E.evaluate(payload)
+    assert result["originalAngleProvided"] is False
+
+
+def test_mobile_youtube_links_do_not_substitute_for_independent_sources():
+    payload = review()
+    payload["sources"][0]["url"] = "https://m.youtube.com/watch?v=abcdefghijk"
+    result = E.evaluate(payload)
+    assert result["uniqueReviewedSourceDomains"] == 1
+    assert "two-independent-source-domains-required" in result["blockers"]
+
