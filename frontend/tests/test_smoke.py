@@ -848,3 +848,48 @@ def test_token_section_shows_only_with_sign_in(browser, base_url):
     finally:
         page.context.close()
     assert "Личные токены" in text and "ext" in text
+
+def test_v13_editorial_review_not_a_publication_approval(browser, base_url):
+    """Use one synthetic archive result: no YouTube search or live channel access."""
+    import json
+
+    lead = {
+        "profile": "kayip", "status": "research-leads",
+        "relatedNiches": 1, "sampleVideos": 3, "selectedDistinctChannels": 1,
+        "candidates": [{
+            "videoId": "abcdefghijk", "channelId": "UC-demo", "channelTitle": "Demo",
+            "referenceTitle": "Bir Osmanlı belgesi", "nicheLabel": "Osmanlı",
+            "outlierScore": 3.0, "views": 4000, "vph24h": None,
+            "competitionEvidence": {"sampleVideos": 3, "sampleChannels": 2},
+        }],
+    }
+    page = _new_page(browser, "tr")
+    try:
+        page.route("**/api/daily-decisions*", lambda route: route.fulfill(
+            status=200, content_type="application/json",
+            body=json.dumps(lead)))
+        page.goto(f"{base_url}/#/brainNext")
+        page.wait_for_function(READY_JS)
+        page.get_by_role("button", name="Özgün fikir ve kaynak kontrolü").click()
+        page.locator("#bnAngle").fill(
+            "Arşiv belgelerindeki tarih anlatılarının farklı yorumlarını "
+            "bağımsız belgelerle karşılaştırmak")
+        page.locator("#bnEffort").select_option("medium")
+        page.locator("#bnReviewSubmit").click()
+        page.get_by_text("Araştırma henüz tamamlanmadı").wait_for()
+        assert "En az iki farklı" in page.locator("#bnEditorialOutcome").inner_text()
+
+        page.locator(".bn-source-url").nth(0).fill("https://arsiv.gov.tr/kaynak")
+        page.locator(".bn-source-url").nth(1).fill("https://universite.edu.tr/makale")
+        page.locator(".bn-source-type").nth(1).select_option("academic")
+        page.locator(".bn-source-reviewed").nth(0).check()
+        page.locator(".bn-source-reviewed").nth(1).check()
+        page.locator("#bnClaimsReviewed").check()
+        page.locator("#bnRightsReviewed").check()
+        page.locator("#bnReviewSubmit").click()
+        page.get_by_text("İnsan editör incelemesine hazırlanmış").wait_for()
+        assert "Bu bir yayın onayı değildir." in page.locator(
+            "#bnEditorialOutcome").inner_text()
+    finally:
+        page.context.close()
+

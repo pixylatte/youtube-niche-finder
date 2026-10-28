@@ -128,3 +128,28 @@ def test_cannot_mix_short_and_long_format_or_cross_profile_evidence():
     assert [r["videoId"] for r in short["candidates"]] == ["abcdefghijl"]
     long = D.rank("kayip", "30d", 8, [{"slug": long_niche}], rows)
     assert [r["videoId"] for r in long["candidates"]] == ["abcdefghijk"]
+
+def test_competition_context_is_sample_evidence_not_market_score():
+    niche = {"slug": "kayıp-sayfalar-osmanlı"}
+    rows = [
+        item("abcdefghijk", channel="UC-A"),
+        item("abcdefghijl", channel="UC-B"),
+        item("abcdefghijm", channel="UC-C"),
+    ]
+    result = D.rank("kayip", "30d", 3, [niche], rows)
+    assert result["status"] == "research-leads"
+    evidence = result["candidates"][0]["competitionEvidence"]
+    assert evidence["sampleVideos"] == 3
+    assert evidence["sampleChannels"] == 3
+    assert evidence["coverage"] == "sampled-archive"
+    assert "market-wide" in evidence["note"]
+    assert "score" not in evidence
+
+
+def test_one_competitor_does_not_pretend_to_measure_market_saturation():
+    niche = {"slug": "kayıp-sayfalar-osmanlı"}
+    rows = [item("abcdefghijk", channel="UC-A")]
+    result = D.rank("kayip", "30d", 3, [niche], rows)
+    evidence = result["candidates"][0]["competitionEvidence"]
+    assert evidence["coverage"] == "insufficient-sample"
+

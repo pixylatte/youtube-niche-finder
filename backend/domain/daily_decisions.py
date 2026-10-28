@@ -111,6 +111,7 @@ def rank(profile, period, limit, niches, videos):
     validate(profile, period, limit)
     unique = {}
     observed_ids = set()
+    niche_evidence = {}
     allowed_niches = {row["slug"] for row in niches}
     expected_short = PROFILES[profile]["only_shorts"]
     for video in videos:
@@ -122,6 +123,11 @@ def rank(profile, period, limit, niches, videos):
             continue
         if isinstance(video.get("videoId"), str) and VIDEO_ID.fullmatch(video["videoId"]):
             observed_ids.add(video["videoId"])
+            sample = niche_evidence.setdefault(video["nicheSlug"],
+                                               {"videos": set(), "channels": set()})
+            sample["videos"].add(video["videoId"])
+            if video.get("channelId"):
+                sample["channels"].add(video["channelId"])
         candidate = _candidate(video)
         if not candidate:
             continue
@@ -144,6 +150,16 @@ def rank(profile, period, limit, niches, videos):
         by_niche[item["nicheSlug"]] += 1
         row = dict(item)
         row.pop("_priority")
+        sample = niche_evidence.get(item["nicheSlug"], {"videos": set(), "channels": set()})
+        n_videos = len(sample["videos"])
+        n_channels = len(sample["channels"])
+        row["competitionEvidence"] = {
+            "sampleVideos": n_videos,
+            "sampleChannels": n_channels,
+            "coverage": "sampled-archive" if n_videos >= 3 and n_channels >= 2
+                        else "insufficient-sample",
+            "note": "Sampled archived references, not a market-wide competition score",
+        }
         selected.append(row)
         if len(selected) >= limit:
             break

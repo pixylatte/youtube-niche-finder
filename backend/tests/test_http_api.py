@@ -704,3 +704,32 @@ def test_daily_decisions_reads_only_the_selected_workspace_niches(monkeypatch):
     assert called[0]["exclude_shorts"] is False
     assert result["candidates"][0]["channelId"] == "UC-ONLY-ISLAM"
     assert result["youtubeQuotaUsed"] == 0
+
+
+def test_editorial_readiness_uses_only_manual_assertions_and_no_collector(monkeypatch):
+    """POST is a pure calculation; neither external link nor YouTube is fetched."""
+    seen = []
+
+    def fake_evaluate(payload):
+        seen.append(payload)
+        return {"status": "research-incomplete", "blockers": ["original-angle-required"],
+                "sourcesVerifiedExternally": False, "youtubeQuotaUsed": 0}
+
+    monkeypatch.setattr(api.EDR, "evaluate", fake_evaluate)
+    data = {"profile": "kayip", "angle": "not ready",
+            "sources": [], "claimsReviewed": False, "rightsReviewed": False}
+    response = client.post("/api/editorial/readiness", json=data)
+    assert response.status_code == 200
+    assert response.json()["status"] == "research-incomplete"
+    assert response.json()["sourcesVerifiedExternally"] is False
+    assert seen == [data]
+
+
+def test_editorial_readiness_invalid_source_is_400():
+    response = client.post("/api/editorial/readiness", json={
+        "profile": "islam",
+        "angle": "Bağımsız kaynakların karşılaştırılması ve farklı bir bakış açısı",
+        "sources": [{"url": "http://invalid.example/test",
+                     "type": "quran", "reviewed": True}],
+    })
+    assert response.status_code == 400

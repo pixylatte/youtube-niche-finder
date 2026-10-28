@@ -83,6 +83,7 @@ from application import trajectory as TJ
 from application import transcripts as TR
 from application import two_factor as TF
 from application import users_admin as UA
+from domain import editorial_readiness as EDR
 from domain import i18n
 from domain import manual_runs as DMR
 from domain import plans as PD
@@ -774,6 +775,19 @@ def daily_decision_leads(profile: str = "kayip", period: str = "30d", limit: int
     """
     try:
         return DAILY.daily_decisions(profile=profile, period=period, limit=limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/editorial/readiness")
+def editorial_readiness(payload: dict = Body(...)):
+    """Evaluate manual source/originality preparation without verification.
+
+    URL/type/review flags are supplied by a human and never fetched.
+    Does not spend API quota, write to DB or issue publication approval.
+    """
+    try:
+        return EDR.evaluate(payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
