@@ -108,9 +108,69 @@ def parse_run(raw, now=None):
         return None
 
 
+
+TOPIC_RESULT_STATES = frozenset({"ok", "failed", "quota", "skipped", "invalid_result"})
+TOPIC_STOP_REASONS = frozenset({"quota", "search-quota", None})
+
+
+def build_topic_result(status, result=None, now=None):
+    """Pure, identity-free snapshot of the opted-in topic search worker step."""
+    instant = now or datetime.now(timezone.utc)
+    if instant.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    if status not in TOPIC_RESULT_STATES:
+        raise ValueError("Unknown topic search status")
+    payload = {
+        "at": instant.astimezone(timezone.utc).isoformat(),
+        "state": status,
+        "topicsSearched": 0,
+        "videosStored": 0,
+        "searchCalls": 0,
+        "stoppedBy": None,
+        "skippedOwnerCount": 0,
+    }
+    if status == "ok":
+        if not isinstance(result, dict):
+            raise ValueError("Successful topic search must return a mapping")
+        for key in ("topicsSearched", "videosStored", "searchCalls"):
+            payload[key] = _nonnegative(result[key])
+        if result.get("stoppedBy") not in TOPIC_STOP_REASONS:
+            raise ValueError("Unexpected stop reason")
+        payload["stoppedBy"] = result.get("stoppedBy")
+        owners = result.get("skippedUsers", [])
+        if not isinstance(owners, list) or len(owners) > 10000:
+            raise ValueError("Unexpected skipped-user payload")
+        payload["skippedOwnerCount"] = len(owners)
+    return payload
+
+
+def parse_topic_result(raw, now=None):
+    if not raw or not isinstance(raw, str) or len(raw) > 4096:
+        return None
+    try:
+        loaded = json.loads(raw)
+        if not isinstance(loaded, dict) or not isinstance(loaded.get("at"), str):
+            return None
+        if loaded.get("state") not in TOPIC_RESULT_STATES:
+            return None
+        if loaded.get("stoppedBy") not in TOPIC_STOP_REASONS:
+            return None
+        counts = {
+            key: _nonnegative(loaded[key])
+            for key in ("topicsSearched", "videosStored", "searchCalls", "skippedOwnerCount")
+        }
+        marker = _timestamp_evidence(loaded["at"], now or datetime.now(timezone.utc))
+        if marker["state"] in ("invalid", "missing", "clock_skew"):
+            return None
+        return {"recorded": marker, "state": loaded["state"],
+                "stoppedBy": loaded["stoppedBy"], **counts}
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return None
+
+
 def summarize(*, daily_marker=None, topic_marker=None, calls_today=0,
               search_limit=100, units_today=0, unit_limit=3000, now=None,
-              run_record=None):
+              run_record=None, topic_run_record=None):
     """Summarize locally recorded metadata without network, API or DB writes."""
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
@@ -121,6 +181,7 @@ def summarize(*, daily_marker=None, topic_marker=None, calls_today=0,
     max_calls = max(0, int(search_limit))
     max_units = max(0, int(unit_limit))
     run = parse_run(run_record, now=now)
+    topic_run = parse_topic_result(topic_run_record, now=now)
     return {
         "observedAt": now.isoformat(),
         "dailySchedulerMarker": _timestamp_evidence(daily_marker, now),
@@ -136,7 +197,8 @@ def summarize(*, daily_marker=None, topic_marker=None, calls_today=0,
             "unitsLeft": max(0, max_units - units),
         },
         "discoveryRun": run,
-        "evidenceLevel": "schedule-and-query-outcomes" if run
+        "topicSearchRun": topic_run,
+        "evidenceLevel": "recorded-collector-outcomes" if (run or topic_run)
         else "schedule-metadata-only",
         "workerRunningVerified": False,
         "discoverySuccessVerified": False,
