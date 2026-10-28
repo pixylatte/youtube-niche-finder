@@ -898,6 +898,11 @@ def test_v13_editorial_review_not_a_publication_approval(browser, base_url):
         assert "Sahne storyboard iskeleti" in production
         assert "Yayın onayı: Yok" in production
         assert "AI senaryo üretimi: Yok" in production
+        assert page.locator("#bnCopyProductionJson").count() == 1
+        page.locator("#bnAngle").fill(
+            "Düzeltilmiş araştırma açısından yeniden farklı kaynakları karşılaştırmak")
+        assert page.locator("#bnProductionResult").inner_text() == ""
+        assert page.locator("#bnEditorialOutcome").inner_text() == ""
     finally:
         page.context.close()
 
