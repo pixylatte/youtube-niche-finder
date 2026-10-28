@@ -682,7 +682,7 @@ def test_daily_decisions_reads_only_the_selected_workspace_niches(monkeypatch):
     called = []
     monkeypatch.setattr(api.DAILY.Q, "list_niches", lambda: [
         {"slug": "kayıp-sayfalar-osmanlı", "label": "Osmanlı", "video_count": 10},
-        {"slug": "1-dakika-i-slam-kıssalar", "label": "Kıssalar", "video_count": 12},
+        {"slug": "1-dakika-islam-kıssalar", "label": "Kıssalar", "video_count": 12},
         {"slug": "trending-tr", "label": "Trending", "video_count": 100},
     ])
 
@@ -691,7 +691,7 @@ def test_daily_decisions_reads_only_the_selected_workspace_niches(monkeypatch):
         return [{
             "videoId": "abcdefghijk", "channelId": "UC-ONLY-ISLAM",
             "title": "Kıssalar araştırma referansı", "channelTitle": "Archive",
-            "views": 1000, "outlierScore": 3.0, "viewsPerSubscriber": 4.5,
+            "views": 1000, "outlierScore": 3.0, "viewsPerSubscriber": 4.5, "isShort": True,
             "snapshots": 1, "publishedAt": "2026-10-20T00:00:00Z",
         }]
 
@@ -699,7 +699,7 @@ def test_daily_decisions_reads_only_the_selected_workspace_niches(monkeypatch):
     result = api.DAILY.daily_decisions(profile="islam", period="30d", limit=5)
     assert result["status"] == "research-leads"
     assert len(called) == 1
-    assert called[0]["niche"] == "1-dakika-i-slam-kıssalar"
+    assert called[0]["niche"] == "1-dakika-islam-kıssalar"
     assert called[0]["only_shorts"] is True
     assert called[0]["exclude_shorts"] is False
     assert result["candidates"][0]["channelId"] == "UC-ONLY-ISLAM"
