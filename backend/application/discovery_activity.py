@@ -97,6 +97,8 @@ def parse_run(raw, now=None):
                 or values["successful"] + values["failed"] + values["quotaBlocked"]
                 + values["invalidResults"] != values["attempted"]):
             return None
+        if not isinstance(loaded.get("at"), str):
+            return None
         instant = _timestamp_evidence(loaded["at"],
                                       now or datetime.now(timezone.utc))
         if instant["state"] in ("missing", "invalid", "clock_skew"):
@@ -118,6 +120,7 @@ def summarize(*, daily_marker=None, topic_marker=None, calls_today=0,
     units = max(0, int(units_today))
     max_calls = max(0, int(search_limit))
     max_units = max(0, int(unit_limit))
+    run = parse_run(run_record, now=now)
     return {
         "observedAt": now.isoformat(),
         "dailySchedulerMarker": _timestamp_evidence(daily_marker, now),
@@ -132,8 +135,8 @@ def summarize(*, daily_marker=None, topic_marker=None, calls_today=0,
             "dailyLimit": max_units,
             "unitsLeft": max(0, max_units - units),
         },
-        "discoveryRun": parse_run(run_record, now=now),
-        "evidenceLevel": "schedule-and-query-outcomes" if parse_run(run_record, now=now)
+        "discoveryRun": run,
+        "evidenceLevel": "schedule-and-query-outcomes" if run
         else "schedule-metadata-only",
         "workerRunningVerified": False,
         "discoverySuccessVerified": False,
