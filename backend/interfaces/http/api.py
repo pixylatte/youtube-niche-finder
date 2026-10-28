@@ -46,6 +46,7 @@ from application import content_calendar as CAL
 from application import content_gaps as CG
 from application import digest as DG
 from application import discovery as trends
+from application import daily_decisions as DAILY
 from application import discovery_activity as DA
 from application import enrichment as EN
 from application import hook_score as HK
@@ -761,6 +762,18 @@ def search(query: str = None, niche: str = None, period: str = "all",
             min_video_length=min_video_length, max_video_length=max_video_length,
             min_rpm=min_rpm, max_rpm=max_rpm,
             sort_by=sort_by, limit=limit, min_ypp_status=min_ypp_status or None)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/daily-decisions")
+def daily_decision_leads(profile: str = "kayip", period: str = "30d", limit: int = 5):
+    """Research candidates from local, labelled niches; not verified ideas.
+
+    Uses no YouTube API, external search, LLM, DB writes or OAuth credentials.
+    """
+    try:
+        return DAILY.daily_decisions(profile=profile, period=period, limit=limit)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
