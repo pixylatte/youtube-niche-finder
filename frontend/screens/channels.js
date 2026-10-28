@@ -14,9 +14,9 @@ const RIVALS_KEY = 'yb.rival.workbench.v1';
 let rivalBasket = null;
 
 function getRivals() {
-  if (rivalBasket !== null) return rivalBasket;
+  // A channel detail page may add a rival without a full reload.
   try { rivalBasket = parseRivalBasket(localStorage.getItem(RIVALS_KEY)); }
-  catch { rivalBasket = []; }
+  catch { if (rivalBasket === null) rivalBasket = []; }
   return rivalBasket;
 }
 
@@ -29,8 +29,12 @@ function saveRivals(ids) {
 function metricValue(entry, metric, format) {
   const v = entry?.[metric];
   if (v == null) return '—';
-  if (format === 'pct') return `${num(v)}%`;
-  if (format === 'mult') return `×${num(v)}`;
+  const precise = (n) => new Intl.NumberFormat(document.documentElement.lang || 'tr', {
+    maximumFractionDigits: 1,
+  }).format(n);
+  if (format === 'pct') return `${precise(v)}%`;
+  if (format === 'mult') return `×${precise(v)}`;
+  if (format === 'decimal') return precise(v);
   return num(v);
 }
 
@@ -55,15 +59,15 @@ function rivalComparisonCard(ids, results) {
     ['analysedVideos', 'compareAnalysed'],
     ['archivePercent', 'compareArchivePct', 'pct'],
     ['uploadsInPeriod', 'comparePeriodUploads'],
-    ['lifetimeUploadsWeekly', 'compareWeekly'],
+    ['lifetimeUploadsWeekly', 'compareWeekly', 'decimal'],
     ['shortsCount', 'compareShorts'],
     ['longformCount', 'compareLongform'],
     ['shortsShare', 'compareShortsShare', 'pct'],
     ['shortsMedianViews', 'compareShortsMedian'],
     ['longformMedianViews', 'compareLongMedian'],
     ['medianViews', 'compareMedian'],
-    ['viewsPerDay30d', 'compareViewsDay'],
-    ['subscribersPerDay30d', 'compareSubsDay'],
+    ['viewsPerDay30d', 'compareViewsDay', 'decimal'],
+    ['subscribersPerDay30d', 'compareSubsDay', 'decimal'],
     ['bestOutlier', 'compareBestOutlier', 'mult'],
     ['snapshots', 'compareSnapshots'],
   ];
