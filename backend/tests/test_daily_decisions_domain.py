@@ -104,10 +104,16 @@ def test_profile_format_and_source_verification_are_explicit():
 def test_1_dakika_islam_niche_matches_collector_slugify():
     from application.collecting import slugify
 
-    slug = slugify("1 Dakika İslam - kıssalar")
-    assert slug == "1-dakika-islam-kıssalar"
-    niches = D.select_niches([{"slug": slug, "video_count": 12}], "islam")
-    assert len(niches) == 1
+    unicode_slug = slugify("1 Dakika İslam - kıssalar")
+    ascii_slug = slugify("1 Dakika Islam - kıssalar")
+    assert unicode_slug == "1-dakika-i-slam-kıssalar"
+    assert ascii_slug == "1-dakika-islam-kıssalar"
+    niches = D.select_niches([
+        {"slug": unicode_slug, "video_count": 12},
+        {"slug": ascii_slug, "video_count": 8},
+        {"slug": "1-dakika-islamiyet-genel", "video_count": 100},
+    ], "islam")
+    assert {n["slug"] for n in niches} == {unicode_slug, ascii_slug}
 
 
 def test_cannot_mix_short_and_long_format_or_cross_profile_evidence():
