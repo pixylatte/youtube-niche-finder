@@ -84,6 +84,7 @@ from application import transcripts as TR
 from application import two_factor as TF
 from application import users_admin as UA
 from domain import editorial_readiness as EDR
+from domain import production_outline as PROD
 from domain import i18n
 from domain import manual_runs as DMR
 from domain import plans as PD
@@ -775,6 +776,19 @@ def daily_decision_leads(profile: str = "kayip", period: str = "30d", limit: int
     """
     try:
         return DAILY.daily_decisions(profile=profile, period=period, limit=limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/editorial/production-plan")
+def editorial_production_plan(payload: dict = Body(...)):
+    """Return a provisional voiceover/scene outline without external calls.
+
+    Never claims historical or religious verification, a complete script,
+    approved copyright, final production costs, or publication readiness.
+    """
+    try:
+        return PROD.build(payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
