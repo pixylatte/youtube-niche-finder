@@ -23,7 +23,24 @@ done
 for sha in "$V1" "$V2" "$V3" "$V4" "$V5"; do
   git -C "$APP" merge-base --is-ancestor "$sha" "$TARGET" || fail "Ancestry mismatch"
 done
-curl -fsS --max-time 10 "$WEB/api/health" >/dev/null || fail "Current health failed"
+# Poll across connection-refused, connection-reset and HTTP 503 during startup.
+# curl --retry-connrefused alone does not cover every transient TCP reset.
+web_ready() {
+  local attempt status
+  for attempt in $(seq 1 30); do
+    status="$(curl -sS --connect-timeout 3 --max-time 8 -o /dev/null       -w '%{http_code}' "$WEB/api/health" 2>/dev/null)" || status="000"
+    if [[ "$status" == "200" ]]; then
+      echo "Web readiness: HTTP 200 on attempt $attempt/30"
+      return 0
+    fi
+    echo "Web warming up: attempt $attempt/30, HTTP $status"
+    sleep 2
+  done
+  echo "Web readiness failed; latest niche-finder-web logs:" >&2
+  docker logs --tail 35 niche-finder-web >&2 || true
+  return 1
+}
+web_ready || fail "Current health failed"
 
 python3 - "$APP" <<'PY'
 import json, subprocess, sys
@@ -48,7 +65,7 @@ finish() {
     python3 "$stage/sync.py" "$stage/backup/frontend" "$APP/frontend" || true
     cp -a "$stage/backup/backend/application/niche_ranking.py" "$APP/backend/application/niche_ranking.py" || true
     docker restart niche-finder-web >/dev/null || true
-    curl -fsS --max-time 10 "$WEB/api/health" >/dev/null || echo "WARNING: manual health check needed" >&2
+    web_ready || echo "WARNING: rollback health check requires manual inspection" >&2
   fi
   rm -rf -- "$stage"
   exit "$rc"
@@ -128,7 +145,7 @@ applied=1
 python3 "$stage/sync.py" "$stage/target/frontend" "$APP/frontend"
 cp -a "$stage/target/backend/application/niche_ranking.py" "$APP/backend/application/niche_ranking.py"
 docker restart niche-finder-web >/dev/null
-curl --retry 10 --retry-connrefused --retry-delay 2 -fsS --max-time 10 "$WEB/api/health" >/dev/null || fail "New site unhealthy"
+web_ready || fail "New site unhealthy after readiness checks"
 curl -fsS --max-time 10 "$WEB/" > "$stage/home.html" || fail "Homepage failed"
 grep -Fq 'id="langSelect"' "$stage/home.html" || fail "Language switch missing"
 grep -Fq 'data-group="research"' "$stage/home.html" || fail "Grouped navigation missing"
