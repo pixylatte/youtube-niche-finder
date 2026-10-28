@@ -100,7 +100,9 @@ function wireEditorialWorkbench(root, references, profile) {
       if (!video) return;
       panel.innerHTML = formFor(video, profile);
       const form = panel.querySelector('#bnEditorialForm');
+      let formRevision = 0;
       const invalidate = () => {
+        formRevision += 1;
         panel.querySelector('#bnEditorialOutcome').innerHTML = '';
         panel.querySelector('#bnProductionResult').innerHTML = '';
       };
@@ -118,6 +120,7 @@ function wireEditorialWorkbench(root, references, profile) {
           }];
         });
         const submit = panel.querySelector('#bnReviewSubmit');
+        const submittedRevision = formRevision;
         submit.disabled = true;
         try {
           const payload = {
@@ -130,7 +133,7 @@ function wireEditorialWorkbench(root, references, profile) {
           const result = await api('/api/editorial/readiness', {
             method: 'POST', body: payload,
           });
-          if (!form.isConnected) return;
+          if (!form.isConnected || submittedRevision !== formRevision) return;
           const outcome = panel.querySelector('#bnEditorialOutcome');
           outcome.innerHTML = reportHtml(result)
             + '<button class="btn btn-ghost" type="button" id="bnProductionRequest">'
