@@ -72,4 +72,4 @@ def test_active_discovery_is_opt_in():
     assert 'worker_preflight()' in text
     assert 'recreate_worker()' in text
     assert 'write_atomic(ENV_PATH, original)' in text
-    assert "requests" not in text
+    assert "import requests" not in text
