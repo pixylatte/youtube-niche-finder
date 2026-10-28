@@ -119,13 +119,15 @@ function topicSearchRunCard(run) {
   if (!run) return `<div class="section-sub" style="margin-top:12px">
     ${t('discoveryTopicRunMissing')}</div>`;
   const time = run.recorded?.at ? esc(fmtDate(run.recorded.at)) : '—';
-  const status = {
+  const status = run.stoppedBy
+    ? t('discoveryTopicRunQuota') : ({
     ok: t('discoveryTopicRunOk'),
     failed: t('discoveryTopicRunFailed'),
     quota: t('discoveryTopicRunQuota'),
     skipped: t('discoveryTopicRunSkipped'),
     invalid_result: t('discoveryTopicRunInvalid'),
-  }[run.state] || t('discoveryTopicRunInvalid');
+  }[run.state] || t('discoveryTopicRunInvalid'));
+
   return `<div class="section-sub" style="margin-top:14px">
     <strong>${t('discoveryTopicRunTitle')}</strong> · ${time} · ${status}
     <div class="tiles">
