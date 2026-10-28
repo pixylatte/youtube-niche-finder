@@ -238,9 +238,9 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
         page.goto(f"{base_url}/#/overview")
         page.wait_for_function(READY_JS, timeout=30000)
         page.evaluate("window.sameDoc = true")
-        page.click("#langToggle")
+        page.select_option("#langSelect", "ru")
         page.wait_for_function("document.documentElement.lang === 'ru'")
-        page.click("#langToggle")
+        page.select_option("#langSelect", "tr")
         page.wait_for_function("document.documentElement.lang === 'tr'")
         page.wait_for_function(
             "() => document.querySelector('#crumbSection').textContent === 'Genel Bakış'"
@@ -251,6 +251,60 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
     finally:
         page.context.close()
 
+
+
+
+def test_brain_navigation_groups_cover_all_routes_and_open_deep_links(browser, base_url):
+    """Grouping is purely visual: no existing route disappears or becomes inaccessible."""
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        groups = page.locator("#nav details.nav-group")
+        assert groups.count() == 4
+        assert [x.strip() for x in groups.locator("summary").all_inner_texts()] == [
+            "Araştırma", "Rakipler ve Kanallar", "İçerik Stüdyosu", "Sistem ve Destek"
+        ]
+        nav_urls = page.locator("#nav a.nav-item").evaluate_all(
+            "(items) => items.map(item => item.getAttribute('href'))"
+        )
+        assert len(nav_urls) == len(set(nav_urls)) == 27
+        assert set(nav_urls) == {f"#/{route}" for route in ROUTES if "/" not in route}
+        assert page.locator('a.nav-item[href="#/overview"]').get_attribute("aria-current") == "page"
+        assert not page.locator('details[data-group="system"]').evaluate("(el) => el.open")
+        page.goto(f"{base_url}/#/profile")
+        page.wait_for_function(READY_JS)
+        assert page.locator('details[data-group="system"]').evaluate("(el) => el.open")
+        assert page.locator('a.nav-item[href="#/profile"]').get_attribute("aria-current") == "page"
+    finally:
+        page.context.close()
+
+
+def test_brain_navigation_preferences_survive_reload_and_languages(browser, base_url):
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        group = page.locator('details[data-group="research"]')
+        assert group.evaluate("(el) => el.open")
+        group.locator("summary").click()
+        page.wait_for_function("""() => {
+            const v = JSON.parse(localStorage.getItem('yb.nav.groups.v1') || '{}');
+            return v.research === false;
+        }""")
+        page.reload()
+        page.wait_for_function(READY_JS)
+        assert not page.locator('details[data-group="research"]').evaluate("(el) => el.open")
+        page.select_option("#langSelect", "en")
+        page.wait_for_function("""() => document.querySelector(
+            'details[data-group="research"] > summary').textContent === 'Research'""")
+        assert not page.locator('details[data-group="research"]').evaluate("(el) => el.open")
+        page.goto(f"{base_url}/#/find")
+        page.wait_for_function(READY_JS)
+        assert page.locator('details[data-group="research"]').evaluate("(el) => el.open")
+        assert page.locator('a.nav-item[href="#/find"]').get_attribute("aria-current") == "page"
+    finally:
+        page.context.close()
 
 
 def test_completed_turkish_dictionary_keys_and_placeholders(browser, base_url):
@@ -352,7 +406,7 @@ def test_language_switch_rerenders_without_reload(browser, base_url):
         page.wait_for_function(READY_JS, timeout=30000)
         assert page.inner_text("#crumbSection") == "Overview"
         page.evaluate("window.__sameDocument = true")
-        page.click("#langToggle")
+        page.select_option("#langSelect", "ru")
         page.wait_for_function("() => document.querySelector('#crumbSection').textContent === 'Обзор'",
                                timeout=15000)
         state = page.evaluate("""() => ({ lang: document.documentElement.lang,

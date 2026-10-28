@@ -14,9 +14,8 @@ import tr from './i18n/tr/app.js';
 
 const t = dict({ ru, en, tr });
 
-// названия языков на самих этих языках -- кнопка показывает, на какой переключит
-const LANG_NAMES = { ru: 'Русский', en: 'English', tr: 'Türkçe' };
-const LANG_ORDER = ['en', 'ru', 'tr'];
+// Navigation expansion is a device preference only; it never affects feature access.
+const NAV_STORAGE_KEY = 'yb.nav.groups.v1';
 
 let me = { multiUser: false, user: null };
 
@@ -47,12 +46,31 @@ function translateChrome() {
     if (label) label.textContent = routeTitle(a.getAttribute('href').slice(2));
   });
   applyTheme(document.documentElement.dataset.theme || 'dark');
-  $('#langToggle').textContent = LANG_NAMES[LANG_ORDER[(LANG_ORDER.indexOf(getLocale()) + 1) % LANG_ORDER.length]];
+  $('#langSelect').value = getLocale();
   if (me.multiUser && me.user) $('#signOut').textContent = t('signOutAs', { email: me.user.email });
   renderBanner();
 }
 
+function initNavGroups() {
+  let saved = {};
+  try {
+    const raw = JSON.parse(localStorage.getItem(NAV_STORAGE_KEY) || '{}');
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) saved = raw;
+  } catch { /* Invalid older preference: use accessible HTML defaults. */ }
+  document.querySelectorAll('#nav details.nav-group').forEach((group) => {
+    if (typeof saved[group.dataset.group] === 'boolean') group.open = saved[group.dataset.group];
+    group.addEventListener('toggle', () => {
+      const prefs = {};
+      document.querySelectorAll('#nav details.nav-group').forEach((item) => {
+        prefs[item.dataset.group] = item.open;
+      });
+      try { localStorage.setItem(NAV_STORAGE_KEY, JSON.stringify(prefs)); } catch { /* Private mode. */ }
+    });
+  });
+}
+
 function initChrome() {
+  initNavGroups();
   const per = $('#globalPeriod');
   per.value = state.period;
   per.addEventListener('change', () => {
@@ -67,7 +85,7 @@ function initChrome() {
   $('#themeToggle').addEventListener('click', () =>
     applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
-  $('#langToggle').addEventListener('click', () => setLocale(LANG_ORDER[(LANG_ORDER.indexOf(getLocale()) + 1) % LANG_ORDER.length]));
+  $('#langSelect').addEventListener('change', (e) => setLocale(e.target.value));
 
   translateChrome();
   addEventListener('hashchange', onHash);

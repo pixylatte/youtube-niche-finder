@@ -15,5 +15,9 @@ export default {
   p90d: '90 days',
   pAll: 'all time',
   reload: 'Refresh',
+  navResearch: 'Research',
+  navCompetitors: 'Competitors & channels',
+  navContent: 'Content studio',
+  navSystem: 'System & support',
   sessionExpired: 'Your session has ended — please sign in again.',
 };
