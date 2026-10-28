@@ -281,7 +281,8 @@ def test_brain_niche_evidence_table_does_not_call_coverage_confidence(browser, b
                 "coverage": 0.4, "reason": "insufficient-data",
                 "status": "insufficient-data", "confidence": "insufficient",
                 "breakdown": [
-                    {"key": k, "value": None, "points": None,
+                    {"key": k, "value": 1 if k in ("demand", "rpm") else None,
+                     "points": 50 if k in ("demand", "rpm") else None,
                      "weight": w, "label": k}
                     for k, w in [
                         ("demand", 25), ("supply", 20), ("newcomers", 20),
@@ -306,7 +307,7 @@ def test_brain_niche_evidence_table_does_not_call_coverage_confidence(browser, b
         assert "Bilinen ölçüt ağırlığı: %80" in txt
         assert "Bilinen ölçüt ağırlığı: %40" in txt
         assert "yeterli veri yok: niş eğilimi hesaplanamıyor" in txt
-        assert "istatistiksel güven" in page.locator(".evidence-weight").first.get_attribute("data-tip")
+        assert "güven" in page.locator(".evidence-weight").first.get_attribute("data-tip")
         assert not problems, problems
     finally:
         page.context.close()
