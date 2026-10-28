@@ -79,6 +79,13 @@ def worker_preflight():
     entry = json.loads(inspect.stdout)[0]
     if entry["State"].get("Status") != "running":
         raise RuntimeError("Worker is not running; diagnose it before changing .env")
+    labels = entry.get("Config", {}).get("Labels", {}) or {}
+    if labels.get("com.docker.compose.project") != "niche-finder" or (
+            labels.get("com.docker.compose.service") != "worker"):
+        raise RuntimeError("Unexpected Docker Compose project/service; deployment blocked")
+    configured = labels.get("com.docker.compose.project.config_files")
+    if not configured or configured.split(",") != [str(ROOT / "docker-compose.yml")]:
+        raise RuntimeError("Worker uses a different Compose configuration; do not recreate it")
     env = dict(line.partition("=")[::2] for line in entry["Config"].get("Env", []))
     if not env.get("YOUTUBE_API_KEY"):
         raise RuntimeError("Worker has no API key; diagnose without exposing the secret")
