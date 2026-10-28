@@ -79,6 +79,7 @@ def test_a_niche_with_a_trend_gets_a_score_and_a_small_one_does_not():
     assert by[BUSY]["score"] is not None and 0 <= by[BUSY]["score"] <= 100
     assert by[BUSY]["band"] in ("high", "medium", "low")
     assert by[THIN]["score"] is None and by[THIN]["reason"] == "insufficient-data"
+    assert by[THIN]["channels"] == 1 and by[THIN]["videos"] == 5
     assert r["niches"][-1]["niche"] == THIN             # unscored last
     assert r["weights"] == {"demand": 25, "supply": 20, "newcomers": 20, "rpm": 15,
                             "template": 10, "policy": 10}
@@ -91,6 +92,7 @@ def test_every_entry_carries_the_breakdown_and_the_raw_numbers():
     assert e["metrics"]["templateShare"] == 0.1 and e["metrics"]["policyShare"] == 0.0
     assert e["metrics"]["rpmMid"] == 2.1 and e["categoryId"] == "10"       # music: 3.0 x 0.7
     assert e["videos"] == 60 and e["recentVideos"] == 26 and e["label"] == "Busy-Niche"
+    assert e["channels"] == 6  # distinct channels, not number of video rows
 
 
 def test_the_ranking_is_cached_and_refresh_recomputes(monkeypatch):
@@ -112,6 +114,7 @@ def test_two_niches_side_by_side_with_the_overview_numbers():
     assert [n["niche"] for n in c["niches"]] == [BUSY, SECOND] and c["missing"] == []
     assert c["niches"][0]["overview"]["video_count"] == 60
     assert c["niches"][0]["overview"]["channel_count"] == 6
+    assert c["niches"][0]["channels"] == 6
     assert c["niches"][0]["breakdown"] and c["weights"]["demand"] == 25
 
 

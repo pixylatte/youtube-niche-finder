@@ -1,4 +1,9 @@
 export default {
+  evidenceLine: "{videos} videos · {channels} channels · {recent} videos in last 30 days",
+  evidenceWeight: "Known component weight: {pct}%",
+  evidenceWeightTip: "Share of the six weighted ranking components with known values. Not statistical confidence, sample adequacy or probability of success.",
+  rowRecentVideos: "Published in last 30 days",
+  rowKnownWeight: "Known component weight",
   termDemand: 'Demand',
   termSupply: 'Supply',
   termNewcomers: 'Newcomers',

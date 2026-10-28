@@ -1,4 +1,9 @@
 export default {
+  evidenceLine: "{videos} video · {channels} kanal · son 30 günde {recent} video",
+  evidenceWeight: "Bilinen ölçüt ağırlığı: %{pct}",
+  evidenceWeightTip: "0–100 niş puanında kullanılan altı ölçütün bilinen ağırlık toplamıdır. İstatistiksel güven, örneklem yeterliliği veya başarı olasılığı değildir.",
+  rowRecentVideos: "Son 30 günde yayınlanan",
+  rowKnownWeight: "Bilinen ölçüt ağırlığı",
   termDemand:'Talep',termSupply:'Arz',termNewcomers:'Yeni kanallar',
   termRpm:'RPM',termTemplate:'Tekrarlayan içerik',termPolicy:'Sinyaller',
   reasonInsufficientData:'yeterli veri yok: niş eğilimi hesaplanamıyor',
