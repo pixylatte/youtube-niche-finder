@@ -96,3 +96,12 @@ def test_scene_visuals_are_placeholder_categories_not_asserted_assets():
         assert result["submittedSourceCount"] == 2
         assert result["reviewedSourceDomainCount"] == 2
         assert result["sourceLinksVerified"] is False
+
+def test_absent_angle_returns_blocked_outline_without_server_exception():
+    data = request("kayip")
+    data.pop("angle")
+    result = P.build(data)
+    assert result["workingAngle"] == ""
+    assert result["planStatus"] == "blocked-provisional-outline"
+    assert "original-angle-required" in result["researchBlockers"]
+
