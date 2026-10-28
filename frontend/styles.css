@@ -842,3 +842,64 @@ select, input[type="text"], input[type="number"], input[type="email"], input[typ
 @media (max-width: 700px) {
   .niche-evidence-line { font-size: 11.5px; }
 }
+
+/* YouTube Brain — competitor data evidence, not a confidence score. */
+.channel-evidence-card { display: grid; gap: 13px; }
+.channel-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.channel-evidence-item {
+  min-width: 0;
+  padding: 14px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.channel-evidence-label {
+  font-size: 12px;
+  font-weight: 690;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.channel-evidence-value {
+  display: block;
+  margin-top: 7px;
+  font-size: clamp(18px, 2vw, 23px);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.channel-evidence-note {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.channel-evidence-caveat {
+  margin: 1px 0 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.channel-evidence-advice {
+  padding: 10px 13px;
+  border-left: 3px solid var(--series-1);
+  background: var(--surface-2);
+  border-radius: 5px;
+}
+.channel-evidence-advice p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.channel-evidence-advice p + p { margin-top: 6px; }
+@media (max-width: 1150px) {
+  .channel-evidence-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 550px) {
+  .channel-evidence-grid { grid-template-columns: minmax(0, 1fr); }
+}

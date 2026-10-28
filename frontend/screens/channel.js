@@ -2,6 +2,7 @@
 import { $, api, q, num, compact, mult, ago, esc, toast, tile, sectionHead, notice, empty, table, commentList, lineChart, VIEW_COUNT_CHANGE, aiLabelsBadge, sponsorBlock, state, rpmRange, templateRiskBlock, yppLine, milestonesLine, qmark, policyBlock, mountProfit, mountCollabs } from '../ui.js';
 import { view, nicheOverviewBlock } from '../shared.js';
 import { dict, fmtDate } from '../i18n.js';
+import { channelEvidence } from '../channel-evidence.js';
 import ru from '../i18n/ru/channel.js';
 import en from '../i18n/en/channel.js';
 import tr from '../i18n/tr/channel.js';
@@ -9,6 +10,43 @@ import tr from '../i18n/tr/channel.js';
 const t = dict({ ru, en, tr });
 
 /* ----------------------------------------------------------------- Канал */
+
+function competitorEvidenceCard(analytics, velocity, history, similar) {
+  const d = channelEvidence(analytics, velocity, history, similar);
+  const value = (v) => v == null ? '—' : num(v);
+  const item = (label, amount, detail) => `<div class="channel-evidence-item">
+    <div class="channel-evidence-label">${esc(label)}</div>
+    <strong class="channel-evidence-value">${esc(amount)}</strong>
+    <div class="channel-evidence-note">${esc(detail)}</div>
+  </div>`;
+  const messages = [];
+  if (d.archiveIncomplete) messages.push(t('evidenceIncompleteArchive'));
+  if (d.historyInsufficient) messages.push(t('evidenceNoHistory'));
+  if (d.velocityInsufficient) messages.push(t('evidenceNoVelocity'));
+  if (d.embeddingMissing) messages.push(t('evidenceNoVectors'));
+  return `<section class="card channel-evidence-card" aria-labelledby="channelEvidenceTitle">
+    ${sectionHead(t('evidenceTitle'), t('evidenceSub'),
+      `<a class="btn btn-ghost btn-sm" href="#/data">${esc(t('evidenceOpenData'))}</a>`)}
+    <div class="channel-evidence-grid">
+      ${item(t('evidenceArchiveLabel'), `${value(d.collected)} / ${value(d.reported)}`,
+        d.archivePercent == null ? t('evidenceArchiveNoPct')
+          : t('evidenceArchivePct', { pct: d.archivePercent }))}
+      ${item(t('evidenceSnapshotsLabel'), value(d.snapshotCount), t('evidenceSnapshotsNote'))}
+      ${item(t('evidenceVelocityLabel'),
+        `${value(d.vphAvailable)} / ${value(d.sampledCount)}`,
+        t('evidenceVelocityNote'))}
+      ${item(t('evidenceEmbeddingsLabel'), value(d.embedded),
+        t('evidenceEmbeddingsNote'))}
+    </div>
+    <p class="channel-evidence-caveat">${esc(t('evidenceGrowthWindows', {
+      windows: d.observedGrowthWindows.length
+        ? d.observedGrowthWindows.join(', ') : t('evidenceNoWindows'),
+    }))}</p>
+    ${messages.length
+      ? `<div class="channel-evidence-advice" role="note">${messages.map((m) =>
+          `<p>${esc(m)}</p>`).join('')}</div>` : ''}
+  </section>`;
+}
 
 async function viewChannel(id) {
   const [a, vel, hist, sim, nicheOv, risk, sponsors] = await Promise.all([
@@ -38,12 +76,14 @@ async function viewChannel(id) {
         ${tile(t('tileVideos'), num(a.profile.videoCount))}
         ${tile(t('tileUploadsPerWeek'), a.cadence.uploadsPerWeekLifetime ?? '—')}
         ${tile(t('tileMedianPerVideo'), compact(a.performance.medianViewsPerVideo))}
-        ${tile('Viral skew', a.performance.viralSkew ?? '—', t('viralSkewNote'))}
-        ${tile(t('tileGrade'), `${esc(a.grade ?? '—')} ${qmark('momentumGrade')}`, a.momentum ? `momentum ${a.momentum}` : t('needHistory'))}
+        ${tile(t('tileViralSkew'), a.performance.viralSkew ?? '—', t('viralSkewNote'))}
+        ${tile(t('tileGrade'), `${esc(a.grade ?? '—')} ${qmark('momentumGrade')}`, a.momentum ? t('momentumLabel', { value: a.momentum }) : t('needHistory'))}
       </div>
       ${a.gone ? notice(`<div>${t('goneNotice', { date: fmtDate(a.gone.missingSince) })}</div>`, 'error') : ''}
       ${!a.growthAvailable ? notice(t('noGrowth', { snapshots: a.snapshots })) : ''}
     </div>
+
+    ${competitorEvidenceCard(a, vel, hist, sim)}
 
     <div class="card">
       ${sectionHead(t('viewsOverTimeTitle'), t('viewsOverTimeSub'))}

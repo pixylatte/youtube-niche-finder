@@ -258,6 +258,70 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
 
 
 
+
+
+def test_brain_competitor_evidence_panel_is_displayed_without_extra_quota(browser, base_url):
+    """Use already-loaded channel endpoints; display archive and snapshot limitations."""
+    page = _new_page(browser, "tr")
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    try:
+        page.goto(f"{base_url}/#/channel/UC0000000000000000000a")
+        page.wait_for_selector("#channelEvidenceTitle", timeout=30000)
+        assert "Rakip Kanal Veri Özeti" in page.inner_text("#view")
+        assert page.locator(".channel-evidence-item").count() == 4
+        text = page.locator(".channel-evidence-card").inner_text()
+        assert "Toplanan / kanalda bildirilen video" in text
+        assert "Kanal istatistik kayıtları" in text
+        assert "24 saatlik hızı ölçülen" in text
+        assert "Vektörü hesaplanan" in text
+        assert "başarı olasılığı veya güven puanı değildir" in text
+        assert page.locator('.channel-evidence-card a[href="#/data"]').count() == 1
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_brain_channel_evidence_calculations_are_honest_about_missing_data(browser, base_url):
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        cases = page.evaluate("""async () => {
+            const { channelEvidence } = await import('/channel-evidence.js');
+            return [
+                channelEvidence(
+                    {profile: {videoCount: 120}, performance: {videosAnalysed: 65},
+                     growth: {'24h': {views: {delta: 0, per_day: 0}},
+                              '7d': {views: null, subscribers: null},
+                              '30d': {subscribers: {delta: 12}}}},
+                    {videos: [{vph24h: null}, {vph24h: 0}, {vph24h: 12}]},
+                    {count: 5}, {videosEmbedded: 40}),
+                channelEvidence(
+                    {profile: {videoCount: 0}, performance: {videosAnalysed: 0},
+                     growth: {}},
+                    {videos: []}, {count: 0}, {}),
+                channelEvidence(
+                    {profile: {videoCount: 3}, performance: {videosAnalysed: 9}},
+                    {videos: [{vph24h: null}]}, {count: 1},
+                    {videosEmbedded: -1}),
+            ];
+        }""")
+        complete, empty, inconsistent = cases
+        assert complete["archivePercent"] == 54
+        assert complete["vphAvailable"] == 2 and complete["sampledCount"] == 3
+        assert complete["observedGrowthWindows"] == ["24h", "30d"]
+        assert complete["archiveIncomplete"] is True
+        assert empty["archivePercent"] is None
+        assert empty["historyInsufficient"] is True
+        assert empty["embeddingMissing"] is False
+        assert inconsistent["archivePercent"] is None
+        assert inconsistent["velocityInsufficient"] is True
+        assert inconsistent["embedded"] is None
+    finally:
+        page.context.close()
+
+
 def test_brain_niche_evidence_table_does_not_call_coverage_confidence(browser, base_url):
     """The ranking page shows exact sample sizes and a visible unscored reason."""
     page = _new_page(browser, "tr")
