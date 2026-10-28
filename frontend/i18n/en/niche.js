@@ -1,4 +1,23 @@
 export default {
+  evidenceTitle: "Archived research evidence",
+  evidenceSupported: "Basic sample coverage present",
+  evidenceLimited: "Limited evidence",
+  evidenceNoSignal: "No archive signal",
+  evidenceUnavailable: "Evidence unavailable",
+  evidenceVideos: "Distinct videos",
+  evidenceChannels: "Distinct channels",
+  evidenceRecent: "Videos published in 45 days",
+  evidenceStrong: "Recent 2× outliers",
+  evidenceFewVideos: "Fewer than 3 distinct archived videos.",
+  evidenceFewChannels: "Evidence comes from fewer than 2 independent channels.",
+  evidenceFewRecent: "Fewer than 2 videos were published in the last 45 days.",
+  evidenceNoOutlier: "No recent 2× outlier found in the archive.",
+  evidenceNoPublishDates: "Publication dates could not be verified from local metadata.",
+  evidenceNoCollectTime: "Last niche collection date is unavailable.",
+  evidenceStaleCollection: "The last niche collection is over 7 days old.",
+  evidenceInvalidRows: "Archive rows are invalid or unavailable.",
+  evidenceCaveat: "Archive sample only. Recency of a niche collection does not prove that every rival was refreshed. This is neither a forecast nor independent verification of YouTube metrics; no API quota was used.",
+
   // tag hit rate
   tagsEmpty: 'no tags in this group yet',
   tagTip: '{tag}: {videos} videos, hitRate {rate}%, lift {lift}',

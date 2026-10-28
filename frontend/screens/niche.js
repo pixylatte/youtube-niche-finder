@@ -8,6 +8,42 @@ import en from '../i18n/en/niche.js';
 
 const t = dict({ ru, en });
 
+/* Ported from legacy Brain's evidence-quality concept. This is an
+   observational sample quality report, not a score or a verified trend. */
+function archiveEvidenceBlock(data) {
+  if (!data) return '';
+  const states = {
+    'supported-sample': 'evidenceSupported',
+    limited: 'evidenceLimited',
+    'no-signal': 'evidenceNoSignal',
+    unavailable: 'evidenceUnavailable',
+  };
+  const reasonKeys = {
+    'few-distinct-videos': 'evidenceFewVideos',
+    'few-independent-channels': 'evidenceFewChannels',
+    'few-recent-publications': 'evidenceFewRecent',
+    'no-recent-outlier': 'evidenceNoOutlier',
+    'publication-dates-unknown': 'evidenceNoPublishDates',
+    'collection-time-unknown': 'evidenceNoCollectTime',
+    'collection-stale': 'evidenceStaleCollection',
+    'invalid-archive-rows': 'evidenceInvalidRows',
+  };
+  const reasons = (data.reasons || []).map(reason =>
+    `<li>${esc(t(reasonKeys[reason] || 'evidenceUnavailable'))}</li>`).join('');
+  const displayCount = (v) => Number.isSafeInteger(v) && v >= 0 ? num(v) : '—';
+  return `<div class="card">
+    ${sectionHead(t('evidenceTitle'), t(states[data.status] || 'evidenceUnavailable'))}
+    <div class="tiles">
+      <div><strong>${displayCount(data.distinctVideos)}</strong><div class="row-sub">${t('evidenceVideos')}</div></div>
+      <div><strong>${displayCount(data.distinctChannels)}</strong><div class="row-sub">${t('evidenceChannels')}</div></div>
+      <div><strong>${displayCount(data.recentVideos45d)}</strong><div class="row-sub">${t('evidenceRecent')}</div></div>
+      <div><strong>${displayCount(data.recentOutliers2x)}</strong><div class="row-sub">${t('evidenceStrong')}</div></div>
+    </div>
+    ${reasons ? `<ul class="digest-list">${reasons}</ul>` : ''}
+    <p class="section-sub">${t('evidenceCaveat')}</p>
+  </div>`;
+}
+
 /* Доля хитов по тегам одной группы -- barList из tag_stats. Группа вводится
    свободным текстом (теги произвольные: theme/trigger/format/...), поэтому
    запоминаем последнюю выбранную в localStorage. */
@@ -398,7 +434,8 @@ async function viewNiche(slug) {
     api(`/api/niches/${encodeURIComponent(slug)}/content-gaps`).catch(() => null),
     api(`/api/niches/${encodeURIComponent(slug)}/thumbnail-styles`).catch(() => null),
   ]);
-  if (!d.found) { view.innerHTML = notice(esc(d.hint || t('nicheNotFound'))); return; }
+  if (!d.found) { view.innerHTML = notice(esc(d.hint || t('nicheNotFound')))
+    + archiveEvidenceBlock(d.evidenceQuality); return; }
 
   const tagsByVideo = {};
   for (const tg of (videoTags.tags || [])) {
@@ -410,6 +447,7 @@ async function viewNiche(slug) {
     sectionHead(t('nicheTitle', { slug }), `${esc(d.query || '')} · ${plabel(state.period)}`, `
       <a class="btn btn-ghost btn-sm" href="/api/niche/${encodeURIComponent(slug)}/export.tsv">${t('exportTsv')}</a>
       <a class="btn btn-ghost btn-sm" href="/api/niche/${encodeURIComponent(slug)}/export.csv">${t('exportCsv')}</a>`))
+    + archiveEvidenceBlock(d.evidenceQuality)
     + nicheTemplateRiskBlock(risk)
     + '<div id="nichePolicy"></div>'
     + '<div id="nicheTraits"></div>'
