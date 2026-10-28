@@ -3,6 +3,7 @@
  * verification by our service. Never send confidential notes here.
  */
 import { api, esc, toast } from './ui.js';
+import { requestProductionOutline } from './production-outline.js';
 
 const SOURCE_TYPES = [
   ['archive', 'Arşiv / belge'],
@@ -70,6 +71,7 @@ function formFor(video, profile) {
       <button class="btn" id="bnReviewSubmit" type="submit">Editoryal eksikleri değerlendir</button>
     </form>
     <div id="bnEditorialOutcome" aria-live="polite"></div>
+    <div id="bnProductionResult" aria-live="polite"></div>
   </div>`;
 }
 
@@ -98,6 +100,12 @@ function wireEditorialWorkbench(root, references, profile) {
       if (!video) return;
       panel.innerHTML = formFor(video, profile);
       const form = panel.querySelector('#bnEditorialForm');
+      const invalidate = () => {
+        panel.querySelector('#bnEditorialOutcome').innerHTML = '';
+        panel.querySelector('#bnProductionResult').innerHTML = '';
+      };
+      form.addEventListener('input', invalidate);
+      form.addEventListener('change', invalidate);
       form.addEventListener('submit', async event => {
         event.preventDefault();
         const sources = [...form.querySelectorAll('.bn-source-url')].flatMap(input => {
@@ -112,17 +120,23 @@ function wireEditorialWorkbench(root, references, profile) {
         const submit = panel.querySelector('#bnReviewSubmit');
         submit.disabled = true;
         try {
+          const payload = {
+            profile, referenceTitle: video.referenceTitle,
+            angle: panel.querySelector('#bnAngle').value,
+            sources, effort: panel.querySelector('#bnEffort').value,
+            claimsReviewed: panel.querySelector('#bnClaimsReviewed').checked,
+            rightsReviewed: panel.querySelector('#bnRightsReviewed').checked,
+          };
           const result = await api('/api/editorial/readiness', {
-            method: 'POST',
-            body: {
-              profile, referenceTitle: video.referenceTitle,
-              angle: panel.querySelector('#bnAngle').value,
-              sources, effort: panel.querySelector('#bnEffort').value,
-              claimsReviewed: panel.querySelector('#bnClaimsReviewed').checked,
-              rightsReviewed: panel.querySelector('#bnRightsReviewed').checked,
-            },
+            method: 'POST', body: payload,
           });
-          panel.querySelector('#bnEditorialOutcome').innerHTML = reportHtml(result);
+          if (!form.isConnected) return;
+          const outcome = panel.querySelector('#bnEditorialOutcome');
+          outcome.innerHTML = reportHtml(result)
+            + '<button class="btn btn-ghost" type="button" id="bnProductionRequest">'
+            + 'Seslendirme ve sahne üretim taslağını oluştur</button>';
+          outcome.querySelector('#bnProductionRequest').addEventListener('click',
+            () => requestProductionOutline(panel, payload));
         } catch (e) {
           toast(e.message, 'err');
         } finally {
