@@ -33,7 +33,7 @@ SHOTS = Path(__file__).resolve().parent / "screenshots"
 # на объекты из seed_demo.py.
 ROUTES = [
     "overview", "find", "viral", "channels", "categories", "keywords", "tags",
-    "tracker", "alerts", "ideas", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
+    "tracker", "alerts", "ideas", "brainNext", "language", "transcripts", "clusters", "titles", "saved", "packaging", "metadata", "calendar",
     "niches", "enter", "own", "data", "help", "mcp", "plan", "admin", "profile",
     "niche/demo", "channel/UC0000000000000000000a", "channel/UC0000000000000000000f",
     "channel-compare/UC0000000000000000000a,UC0000000000000000000f", "brief/avid000",

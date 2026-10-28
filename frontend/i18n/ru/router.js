@@ -9,6 +9,7 @@ export default {
   tracker: 'Трекер каналов',
   alerts: 'Алерты',
   ideas: 'Проверка идей',
+  brainNext: 'Ежедневные видео-решения',
   language: 'Другой язык',
   transcripts: 'Транскрипты',
   clusters: 'Карта ниш',

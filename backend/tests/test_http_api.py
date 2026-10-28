@@ -652,3 +652,55 @@ def test_discovery_activity_endpoint_includes_last_worker_query_outcomes(monkeyp
     assert result["workerRunningVerified"] is False
     assert result["discoverySuccessVerified"] is False
 
+
+def test_daily_decisions_route_is_quota_free_and_bounded(monkeypatch):
+    seen = []
+
+    def fake_decisions(profile, period, limit):
+        seen.append((profile, period, limit))
+        return {"profile": profile, "status": "insufficient-data", "candidates": [],
+                "youtubeQuotaUsed": 0}
+
+    monkeypatch.setattr(api.DAILY, "daily_decisions", fake_decisions)
+    response = client.get("/api/daily-decisions?profile=islam&period=90d&limit=3")
+    assert response.status_code == 200
+    assert response.json()["profile"] == "islam"
+    assert response.json()["youtubeQuotaUsed"] == 0
+    assert seen == [("islam", "90d", 3)]
+
+
+def test_daily_decisions_route_rejects_invalid_profiles(monkeypatch):
+    def bad_input(profile, period, limit):
+        raise ValueError("profile must be kayip or islam")
+
+    monkeypatch.setattr(api.DAILY, "daily_decisions", bad_input)
+    response = client.get("/api/daily-decisions?profile=unknown")
+    assert response.status_code == 400
+    assert "profile" in response.json()["detail"]
+
+def test_daily_decisions_reads_only_the_selected_workspace_niches(monkeypatch):
+    called = []
+    monkeypatch.setattr(api.DAILY.Q, "list_niches", lambda: [
+        {"slug": "kayıp-sayfalar-osmanlı", "label": "Osmanlı", "video_count": 10},
+        {"slug": "1-dakika-islam-kıssalar", "label": "Kıssalar", "video_count": 12},
+        {"slug": "trending-tr", "label": "Trending", "video_count": 100},
+    ])
+
+    def fake_search(**kwargs):
+        called.append(kwargs)
+        return [{
+            "videoId": "abcdefghijk", "channelId": "UC-ONLY-ISLAM",
+            "title": "Kıssalar araştırma referansı", "channelTitle": "Archive",
+            "views": 1000, "outlierScore": 3.0, "viewsPerSubscriber": 4.5, "isShort": True,
+            "snapshots": 1, "publishedAt": "2026-10-20T00:00:00Z",
+        }]
+
+    monkeypatch.setattr(api.DAILY.Q, "search_outliers", fake_search)
+    result = api.DAILY.daily_decisions(profile="islam", period="30d", limit=5)
+    assert result["status"] == "research-leads"
+    assert len(called) == 1
+    assert called[0]["niche"] == "1-dakika-islam-kıssalar"
+    assert called[0]["only_shorts"] is True
+    assert called[0]["exclude_shorts"] is False
+    assert result["candidates"][0]["channelId"] == "UC-ONLY-ISLAM"
+    assert result["youtubeQuotaUsed"] == 0
