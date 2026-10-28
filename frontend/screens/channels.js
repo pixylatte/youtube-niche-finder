@@ -116,13 +116,14 @@ function rivalFormatReport(representatives, responses) {
     const facts = hasResult ? repeatabilityEvidence(result.value) : null;
     const [label, cls] = facts
       ? formatLabels[facts.verdict] : ['formatError', ''];
+    const evidenceLine = facts ? t('formatEvidenceLine', {
+      hit: count(facts.hitChannels),
+      channels: count(facts.independentChannels),
+      videos: count(facts.similarVideos),
+    }) : '';
     const detail = facts?.reason === 'no-embedding' ? t('formatNoVectors')
-      : facts?.verdict === 'unknown' ? t('formatInsufficient')
-      : facts ? t('formatEvidenceLine', {
-        hit: count(facts.hitChannels),
-        channels: count(facts.independentChannels),
-        videos: count(facts.similarVideos),
-      }) : t('formatRequestFailed');
+      : facts?.verdict === 'unknown' ? `${t('formatInsufficient')} ${evidenceLine}`
+      : facts ? evidenceLine : t('formatRequestFailed');
     const examples = facts?.examples?.length
       ? `<ul class="rival-format-examples">${facts.examples.map((m) =>
         `<li><a href="https://www.youtube.com/watch?v=${encodeURIComponent(m.videoId)}"
