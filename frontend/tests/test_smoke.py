@@ -254,6 +254,62 @@ def test_turkish_language_can_be_selected_and_preserved(browser, base_url):
 
 
 
+
+
+def test_brain_archive_coverage_is_global_and_visible(browser, base_url):
+    """Evidence metadata is clearly scoped and does not pretend to be a niche-specific score."""
+    page = _new_page(browser, "tr")
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        page.locator("#archiveCoverageTitle").wait_for()
+        assert page.locator(".coverage-item").count() == 4
+        text = page.locator(".coverage-card").inner_text()
+        assert "Arşiv Veri Durumu" in text
+        assert "seçilen nişe özel değildir" in text
+        assert "güvenilirlik puanı değildir" in text
+        assert "Geçmiş kaydı olan videolar" in text
+        assert "Vektörü olan videolar" in text
+        assert page.locator('.coverage-card a[href="#/data"]').count() == 1
+        assert not errors, errors
+    finally:
+        page.context.close()
+
+
+def test_brain_archive_coverage_derives_counts_without_guessing(browser, base_url):
+    """Zero denominator, missing keys and inconsistent counters never become invented percentages."""
+    page = _new_page(browser, "tr")
+    try:
+        page.goto(f"{base_url}/#/overview")
+        page.wait_for_function(READY_JS)
+        calculated = page.evaluate("""async () => {
+            const { archiveCoverage } = await import('/coverage-insights.js');
+            return [
+                archiveCoverage({ videosTotal: 200, videosPublishedInPeriod: 4,
+                  videosWithHistory: 80, videosWithCategory: 160 },
+                  { videos_without_embedding: 25 }),
+                archiveCoverage({ videosTotal: 0, videosPublishedInPeriod: 0,
+                  videosWithHistory: 0, videosWithCategory: 0 },
+                  { videos_without_embedding: 0 }),
+                archiveCoverage({ videosTotal: 7, videosWithHistory: 8,
+                  videosWithCategory: null }, { videos_without_embedding: 9 }),
+                archiveCoverage({}, {}),
+            ];
+        }""")
+        complete, empty, inconsistent, missing = calculated
+        assert complete["period"] == 4 and complete["periodSparse"] is True
+        assert complete["historyPct"] == 40
+        assert complete["categoriesPct"] == 80
+        assert complete["vectors"] == 175 and complete["vectorsPct"] == 88
+        assert empty["historyPct"] is None and empty["vectorsPct"] is None
+        assert inconsistent["historyPct"] is None and inconsistent["vectors"] is None
+        assert missing["total"] is None and missing["periodPct"] is None
+    finally:
+        page.context.close()
+
+
 def test_brain_navigation_groups_cover_all_routes_and_open_deep_links(browser, base_url):
     """Grouping is purely visual: no existing route disappears or becomes inaccessible."""
     page = _new_page(browser, "tr")
